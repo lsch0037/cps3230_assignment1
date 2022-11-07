@@ -1,6 +1,5 @@
 package com.lsch0037.cps3230Test;
 
-//TODO: CHANGE THIS TO ONLY IMPORT NECCESSARY THINGS
 import com.lsch0037.cps3230.ScreenScraper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,7 +51,7 @@ public class ScreenScraperTest
     @Test
     public void testVisitAmazon(){
         //Visit amazon.com website
-        ScreenScraper.visitAmazon(this.driver);
+        ScreenScraper.visitAmazon(driver);
 
         //Verify that the title is the same title
         String title = driver.getTitle();
@@ -62,7 +61,7 @@ public class ScreenScraperTest
     @Test
     public void testVisitMarketAlert(){
         //Visit marketalertum.com website
-        ScreenScraper.visitMarketAlert(this.driver);
+        ScreenScraper.visitMarketAlert(driver);
 
         //Verify that the title is the same title
         String title = driver.getTitle();
@@ -71,7 +70,12 @@ public class ScreenScraperTest
 
     @Test
     public void testSearchAmazon(){
-        assertTrue(false);
+        ScreenScraper.visitAmazon(driver);
+        ScreenScraper.searchAmazon(driver, "basketball");
+
+        WebElement element = driver.findElement(By.name());
+        String text = element.getText();
+        assertEquals(text, "basketball");
     }
 
     @Test

@@ -32,13 +32,15 @@ public class ScreenScraper
 
     public static void searchAmazon(WebDriver driver, String searchTerm){
         //get the web elements
-        WebElement acceptCookiesButton = driver.findElement(By.id("sp-cc-accept"));
+        //WebElement acceptCookiesButton = driver.findElement(By.id("sp-cc-accept"));
         WebElement searchBar = driver.findElement(By.id("twotabsearchtextbox"));
         WebElement searchButton = driver.findElement(By.id("nav-search-submit-button"));
 
+        /*
         //if cookies popup, click accept cookies
         if(acceptCookiesButton != null)
             acceptCookiesButton.sendKeys(Keys.ENTER);
+        */
 
         //type in search term and press enter
         searchBar.sendKeys(searchTerm);
@@ -46,7 +48,7 @@ public class ScreenScraper
 
     }
 
-    public static void scrapeAmazon(WebDriver driver, int amount){
+    public static void scrapeAmazon(WebDriver driver, int numOfResults){
 
     }
 
