@@ -1,13 +1,17 @@
 package com.lsch0037.cps3230Test;
 
 import com.lsch0037.cps3230.ScreenScraper;
+import com.lsch0037.cps3230.AlertItem;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -70,17 +74,51 @@ public class ScreenScraperTest
 
     @Test
     public void testSearchAmazon(){
-        ScreenScraper.visitAmazon(driver);
-        ScreenScraper.searchAmazon(driver, "basketball");
+        String searchTerm = "football";
+        ScreenScraper.visitAmazon(driver);  //go to amazon
+        ScreenScraper.searchAmazon(driver, searchTerm);   //search for "basketball"
 
-        WebElement element = driver.findElement(By.name());
-        String text = element.getText();
-        assertEquals(text, "basketball");
+        //Verify that the title is as expected when searching for a term
+        String title = driver.getTitle();
+        assertEquals(title, "Amazon.com : " + searchTerm);
     }
 
+    /*
     @Test
-    public void testScrapeAmazon(){
-        assertTrue(false);
+    public void testGetTopResults(){
+        ScreenScraper.visitAmazon(driver);  //go to amazon
+        ScreenScraper.searchAmazon(driver, "basketball");   //search for "basketball"
+
+        //get the top 10 search results
+        List<AlertItem> results = ScreenScraper.getTopResults(driver, 10);
+
+
+        //verify
+        //list of results is not empty
+        assertFalse(results.isEmpty());
+
+        //for each result
+        for (AlertItem result : results) {
+            //assertTrue(result.getType() > 0 && result.getType() < 7);
+            assertFalse(result.getTitle().isEmpty());
+            assertFalse(result.getDescription().isEmpty());
+            assertFalse(result.getUrl().isEmpty());
+            assertFalse(result.getImageUrl().isEmpty());
+            assertFalse(result.getPostedBy().isEmpty());
+            assertTrue(result.getPriceInCents() > 0 );
+        }
+    }
+    */
+    @Test
+    public void testGetTopResults(){
+        String searchTerm = "basketball";
+        int numOfResults = 10;
+        ScreenScraper.visitAmazon(driver);
+        ScreenScraper.searchAmazon(driver, searchTerm);
+        List<WebElement> results = ScreenScraper.getTopResults(driver, numOfResults);
+        
+        assertFalse(results.isEmpty());
+        assertFalse(results.size() == numOfResults);
     }
 
     @Test
