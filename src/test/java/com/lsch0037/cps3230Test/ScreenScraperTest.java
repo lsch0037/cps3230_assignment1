@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 
@@ -119,6 +120,40 @@ public class ScreenScraperTest
         
         assertFalse(results.isEmpty());
         assertFalse(results.size() == numOfResults);
+    }
+
+    @Test
+    public void testVisitResult(){
+        String searchTerm = "razors";
+        int numOfResults = 10;
+        ScreenScraper.visitAmazon(driver);
+        ScreenScraper.searchAmazon(driver, searchTerm);
+        WebElement result = ScreenScraper.getTopResults(driver, numOfResults).get(0);
+        
+        ScreenScraper.visitResult(driver, result);
+
+    }
+
+    @Test
+    public void testParseResult(){
+        String searchTerm = "bike";
+        int numOfResults = 3;
+        ScreenScraper.visitAmazon(driver);
+        ScreenScraper.searchAmazon(driver, searchTerm);
+        List<WebElement> results = ScreenScraper.getTopResults(driver, numOfResults);
+
+        AlertItem alert;
+        for (WebElement result : results) {
+            ScreenScraper.visitResult(driver, result);
+
+            alert = ScreenScraper.parseResult(driver);
+            assertFalse(alert.getTitle().isEmpty());
+            assertFalse(alert.getDescription().isEmpty());
+            assertFalse(alert.getUrl().isEmpty());
+            assertFalse(alert.getImageUrl().isEmpty());
+            assertTrue(alert.getPriceInCents() > 0);
+        }
+
     }
 
     @Test

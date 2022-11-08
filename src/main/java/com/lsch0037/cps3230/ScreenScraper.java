@@ -2,9 +2,6 @@ package com.lsch0037.cps3230;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-
-import com.google.j2objc.annotations.RetainedLocalRef;
-
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
@@ -52,37 +49,19 @@ public class ScreenScraper
     //Returns the web element of the top X search results
     //where x is the number of results specified
     public static List<WebElement> getTopResults(WebDriver driver, int numOfResults){
-        List<WebElement> resultsItem = driver.findElements(By.className("s-result-item"));
+        List<WebElement> results = driver.findElements(By.className("s-result-item"));
+        return results.subList(1, numOfResults + 2);
+    }
 
-        /*List<WebElement> titlesElements = driver.findElements(By.tagName("h2"));
-        List<WebElement> imageUrlElements = driver.findElements(By.className("s-image"));
+    //Navigate on to the page of a specific result object
+    public static void visitResult(WebDriver driver, WebElement result){
+        WebElement image = result.findElement(By.tagName("img"));
 
-        List<AlertItem> items = new LinkedList<AlertItem>();
-
-        for (WebElement result : searchResults) {
-            AlertItem item = new AlertItem();
-
-            //item.setType(alertType);
-            item.setTitle(titleElement.getText());
-            item.setDescription("test");
-            item.setUrl("test");
-            item.setImageUrl("test");
-            item.setPostedBy("test");
-            item.setPriceInCents(1);
-
-            items.add(item);
-        }
-
-        return items;
-        */
-
-        return resultsItem;
+        image.click();
     }
 
     //Given the results, returns a corresponding AlertItem object with all the matching details
-    public static AlertItem parseResult(WebDriver driver, WebElement result){
-        //click the result element
-        result.sendKeys(Keys.ENTER);
+    public static AlertItem parseResult(WebDriver driver){
 
         String title = driver.findElement(By.id("productTitle")).getText();
         String description = driver.findElement(By.id("productDescription")).getText();
