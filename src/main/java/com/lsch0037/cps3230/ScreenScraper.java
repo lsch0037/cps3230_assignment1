@@ -2,12 +2,16 @@ package com.lsch0037.cps3230;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+
+import net.bytebuddy.asm.Advice.Enter;
+
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 
 import java.util.List;
 import java.security.Key;
+import java.sql.ResultSet;
 import java.util.LinkedList;
 
 public class ScreenScraper 
@@ -18,7 +22,7 @@ public class ScreenScraper
         WebDriver driver = new ChromeDriver();
         visitAmazon(driver);
         searchAmazon(driver, "bluetooth Speaker");
-        getTopResults(driver, 5);
+        getResults(driver, 5);
 
         driver.quit();
     }
@@ -29,6 +33,12 @@ public class ScreenScraper
         driver.get("https://www.amazon.com");
     }
 
+    //nagivates to the amazon website
+    public static void visitScan(WebDriver driver){
+        //visit amazon.com website
+        driver.get("https://www.scanmalta.com");
+    }
+
     //nagivates to the marketalertum website
     public static void visitMarketAlert(WebDriver driver){
         //visit marketalertum.com website
@@ -37,20 +47,59 @@ public class ScreenScraper
 
     public static void searchAmazon(WebDriver driver, String searchTerm){
         //get the web elements
-        WebElement searchBar = driver.findElement(By.id("twotabsearchtextbox"));
+        WebElement searchBar = driver.findElement(By.className("nav-search-field")).findElement(By.tagName("input"));
         WebElement searchButton = driver.findElement(By.id("nav-search-submit-button"));
 
         //type in search term and press enter
         searchBar.sendKeys(searchTerm);
-        searchButton.sendKeys(Keys.ENTER);
-
+        searchButton.click();
     }
 
+    public static void searchScan(WebDriver driver, String searchTerm){
+        //get the web elements
+        WebElement searchBar = driver.findElement(By.id("search"));
+        List<WebElement> buttons = driver.findElements(By.tagName("btn"));
+
+        //type in search term and press enter
+        searchBar.sendKeys(searchTerm);
+        searchBar.sendKeys(Keys.ENTER);
+
+        for (WebElement button : buttons){
+            if(button.getAttribute("title").equals("Search"))
+                button.click();
+                return;
+        }
+
+        //in case no search button is found
+        assert false;
+    }
+
+    /*
     //Returns the web element of the top X search results
     //where x is the number of results specified
-    public static List<WebElement> getTopResults(WebDriver driver, int numOfResults){
+    public static List<WebElement> getResults(WebDriver driver, int numOfResults){
         List<WebElement> results = driver.findElements(By.className("s-result-item"));
-        return results.subList(1, numOfResults + 2);
+
+        for (WebElement result : results) {
+            //categories are not result objects
+            if(!result.findElements(By.tagName("li")).isEmpty()){
+                results.remove(result);
+            }else if(result.findElements(By.className("sg-col-inner")).isEmpty()){
+                results.remove(result);
+            }
+        }
+
+        // List<WebElement> resultList = driver.findElements(By.className("s-result-list"));
+        // return results.subList(1, numOfResults + 2);
+        return results;
+    }
+    */
+
+    public static List<WebElement> getResults(WebDriver driver, int x){
+        WebElement resultList = driver.findElement(By.tagName("ol"));
+        List<WebElement> results = resultList.findElements(By.className("item"));
+
+        return results.subList(0, x);
     }
 
     //Navigate on to the page of a specific result object

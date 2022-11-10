@@ -9,7 +9,7 @@ public class AlertItem {
     int priceInCents;
 
     public void AlertItem(){
-
+        int x = 0;
     }
 
 

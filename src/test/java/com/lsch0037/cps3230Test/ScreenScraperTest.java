@@ -64,6 +64,16 @@ public class ScreenScraperTest
     }
 
     @Test
+    public void testVisitScan(){
+        //Visit amazon.com website
+        ScreenScraper.visitScan(driver);
+
+        //Verify that the title is the same title
+        String title = driver.getTitle();
+        assertEquals(title, "Computers Store Malta | SCAN");
+    }
+
+    @Test
     public void testVisitMarketAlert(){
         //Visit marketalertum.com website
         ScreenScraper.visitMarketAlert(driver);
@@ -83,6 +93,19 @@ public class ScreenScraperTest
         String title = driver.getTitle();
         assertEquals(title, "Amazon.com : " + searchTerm);
     }
+
+    @Test
+    public void testSearchScan(){
+        String searchTerm = "football";
+        ScreenScraper.visitScan(driver);  //go to amazon
+        ScreenScraper.searchScan(driver, searchTerm);   //search for "basketball"
+
+        //Verify that the title is as expected when searching for a term
+        String resultText = driver.findElement(By.className("page-title")).getText();
+        assertEquals(resultText, "Search results for: '"+ searchTerm +"'");
+
+    }
+    
 
     /*
     @Test
@@ -111,15 +134,15 @@ public class ScreenScraperTest
     }
     */
     @Test
-    public void testGetTopResults(){
+    public void testGetResults(){
         String searchTerm = "basketball";
         int numOfResults = 10;
-        ScreenScraper.visitAmazon(driver);
-        ScreenScraper.searchAmazon(driver, searchTerm);
-        List<WebElement> results = ScreenScraper.getTopResults(driver, numOfResults);
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, searchTerm);
+        List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
         
         assertFalse(results.isEmpty());
-        assertFalse(results.size() == numOfResults);
+        // assertFalse(results.size() == numOfResults);
     }
 
     @Test
@@ -128,7 +151,7 @@ public class ScreenScraperTest
         int numOfResults = 10;
         ScreenScraper.visitAmazon(driver);
         ScreenScraper.searchAmazon(driver, searchTerm);
-        WebElement result = ScreenScraper.getTopResults(driver, numOfResults).get(0);
+        WebElement result = ScreenScraper.getResults(driver, numOfResults).get(0);
         
         ScreenScraper.visitResult(driver, result);
 
@@ -140,7 +163,7 @@ public class ScreenScraperTest
         int numOfResults = 3;
         ScreenScraper.visitAmazon(driver);
         ScreenScraper.searchAmazon(driver, searchTerm);
-        List<WebElement> results = ScreenScraper.getTopResults(driver, numOfResults);
+        List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
 
         AlertItem alert;
         for (WebElement result : results) {
