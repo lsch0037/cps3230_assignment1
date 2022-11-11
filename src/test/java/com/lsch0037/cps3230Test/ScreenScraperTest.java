@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -52,17 +53,6 @@ public class ScreenScraperTest
         driver.quit();
     }
 
-
-    @Test
-    public void testVisitAmazon(){
-        //Visit amazon.com website
-        ScreenScraper.visitAmazon(driver);
-
-        //Verify that the title is the same title
-        String title = driver.getTitle();
-        assertEquals(title, "Amazon.com. Spend less. Smile more.");
-    }
-
     @Test
     public void testVisitScan(){
         //Visit amazon.com website
@@ -84,99 +74,84 @@ public class ScreenScraperTest
     }
 
     @Test
-    public void testSearchAmazon(){
-        String searchTerm = "football";
-        ScreenScraper.visitAmazon(driver);  //go to amazon
-        ScreenScraper.searchAmazon(driver, searchTerm);   //search for "basketball"
-
-        //Verify that the title is as expected when searching for a term
-        String title = driver.getTitle();
-        assertEquals(title, "Amazon.com : " + searchTerm);
-    }
-
-    @Test
     public void testSearchScan(){
         String searchTerm = "football";
         ScreenScraper.visitScan(driver);  //go to amazon
-        ScreenScraper.searchScan(driver, searchTerm);   //search for "basketball"
+        boolean success = ScreenScraper.searchScan(driver, searchTerm);   //search for "basketball"
+
+        assertTrue(success);
 
         //Verify that the title is as expected when searching for a term
         String resultText = driver.findElement(By.className("page-title")).getText();
         assertEquals(resultText, "Search results for: '"+ searchTerm +"'");
 
     }
-    
 
-    /*
-    @Test
-    public void testGetTopResults(){
-        ScreenScraper.visitAmazon(driver);  //go to amazon
-        ScreenScraper.searchAmazon(driver, "basketball");   //search for "basketball"
-
-        //get the top 10 search results
-        List<AlertItem> results = ScreenScraper.getTopResults(driver, 10);
-
-
-        //verify
-        //list of results is not empty
-        assertFalse(results.isEmpty());
-
-        //for each result
-        for (AlertItem result : results) {
-            //assertTrue(result.getType() > 0 && result.getType() < 7);
-            assertFalse(result.getTitle().isEmpty());
-            assertFalse(result.getDescription().isEmpty());
-            assertFalse(result.getUrl().isEmpty());
-            assertFalse(result.getImageUrl().isEmpty());
-            assertFalse(result.getPostedBy().isEmpty());
-            assertTrue(result.getPriceInCents() > 0 );
-        }
-    }
-    */
     @Test
     public void testGetResults(){
-        String searchTerm = "basketball";
+        String searchTerm = "headphones";
         int numOfResults = 10;
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, searchTerm);
         List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
         
         assertFalse(results.isEmpty());
-        // assertFalse(results.size() == numOfResults);
+        assertFalse(results.size() == numOfResults);
+    }
+
+    @Test
+    public void testGetEmptyResults(){
+        String searchTerm = "basketball";   //empty search term
+        int numOfResults = 10;
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, searchTerm);
+        List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
+        
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    public void testGetTooManyResults(){
+        String searchTerm = "usb stick";   //empty search term
+        int numOfResults = 30;
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, searchTerm);
+        List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
+        
+        //will return only as many products as there are
+        assertNotEquals(results.size(), numOfResults);
     }
 
     @Test
     public void testVisitResult(){
-        String searchTerm = "razors";
-        int numOfResults = 10;
-        ScreenScraper.visitAmazon(driver);
-        ScreenScraper.searchAmazon(driver, searchTerm);
+        String searchTerm = "case";
+        int numOfResults = 2;
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, searchTerm);
         WebElement result = ScreenScraper.getResults(driver, numOfResults).get(0);
-        
         ScreenScraper.visitResult(driver, result);
 
+        //verify this element exists, it only exists on a product page
+        assertNotNull(driver.findElement(By.className("product-info-main")));
     }
 
     @Test
     public void testParseResult(){
-        String searchTerm = "bike";
+        String searchTerm = "phone";
         int numOfResults = 3;
-        ScreenScraper.visitAmazon(driver);
-        ScreenScraper.searchAmazon(driver, searchTerm);
-        List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, searchTerm);
+        WebElement result = ScreenScraper.getResults(driver, numOfResults).get(0);
 
         AlertItem alert;
-        for (WebElement result : results) {
-            ScreenScraper.visitResult(driver, result);
+        ScreenScraper.visitResult(driver, result);
 
-            alert = ScreenScraper.parseResult(driver);
-            assertFalse(alert.getTitle().isEmpty());
-            assertFalse(alert.getDescription().isEmpty());
-            assertFalse(alert.getUrl().isEmpty());
-            assertFalse(alert.getImageUrl().isEmpty());
-            assertTrue(alert.getPriceInCents() > 0);
-        }
-
+        alert = ScreenScraper.parseResult(driver);
+        assertFalse(alert.getTitle().isEmpty());
+        assertFalse(alert.getDescription().isEmpty());
+        assertFalse(alert.getUrl().isEmpty());
+        assertFalse(alert.getImageUrl().isEmpty());
+        assertTrue(alert.getPriceInCents() > 0);
     }
 
     @Test
