@@ -2,16 +2,9 @@ package com.lsch0037.cps3230Test;
 
 import com.lsch0037.cps3230.ScreenScraper;
 
-import io.netty.handler.codec.http.HttpResponse;
+import com.lsch0037.cps3230.Product;
 
-import com.lsch0037.cps3230.AlertItem;
-
-import java.nio.channels.AlreadyConnectedException;
-import java.security.DrbgParameters.Reseed;
 import java.util.List;
-import java.util.Random;
-
-import javax.security.auth.login.LoginContext;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
@@ -26,13 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
 
 public class ScreenScraperTest 
 {
     WebDriver driver;
+    //TODO: REMOVE THIS BEFORE RELEASE
     String username = "21ed7a53-ff36-4daf-8da0-c8b66b11c0de";
 
     @BeforeEach
@@ -83,10 +75,27 @@ public class ScreenScraperTest
         assertEquals(title, "Home Page - MarketAlertUM");
     }
 
+    //returns search term randomly selected from among products that are offered by scanmalta
+    public String randomSearchTerm(){
+        String searchTerms[] = {
+            "Laptop",
+            "Monitor",
+            "Graphics Card",
+            "Keyboard",
+            "Mouse",
+            "Headphones",
+            "Speaker",
+            "Tablet",
+            "Router"
+        };
+
+        return searchTerms[randomInt(0, searchTerms.length)];
+    }
+
     @Test
     public void testSearchScan(){
-        String searchTerm = "football";
-        ScreenScraper.visitScan(driver);  //go to amazon
+        String searchTerm = randomSearchTerm();
+        ScreenScraper.visitScan(driver);  //go to scanmalta
         boolean success = ScreenScraper.searchScan(driver, searchTerm);   //search for "basketball"
 
         assertTrue(success);
@@ -94,12 +103,12 @@ public class ScreenScraperTest
         //Verify that the title is as expected when searching for a term
         String resultText = driver.findElement(By.className("page-title")).getText();
         assertEquals(resultText, "Search results for: '"+ searchTerm +"'");
-
     }
 
+    /*
     @Test
     public void testGetResults(){
-        String searchTerm = "headphones";
+        String searchTerm = randomSearchTerm();
         int numOfResults = 10;
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, searchTerm);
@@ -108,22 +117,45 @@ public class ScreenScraperTest
         assertFalse(results.isEmpty());
         assertFalse(results.size() == numOfResults);
     }
+    */
 
     @Test
+    public void testGetResultLinks(){
+        String searchTerm = randomSearchTerm();
+        int numOfResults = randomInt(1, 10);
+
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, searchTerm);
+        List<String> links = ScreenScraper.getResultLinks(driver, numOfResults);
+
+        for(String link : links){
+            //Visit each link
+            driver.get(link);
+
+            //verify this element exists, it only exists on a product page
+            assertNotNull(driver.findElement(By.className("product-info-main")));
+        }
+
+    }
+
+    /*
+    @Test
     public void testGetEmptyResults(){
-        String searchTerm = "basketball";   //empty search term
-        int numOfResults = 10;
+        String searchTerm = randomSearchTerm();
+        int numOfResults = randomInt(1, 10);
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, searchTerm);
         List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
         
         assertTrue(results.isEmpty());
     }
+    */
 
+    /*
     @Test
     public void testGetTooManyResults(){
-        String searchTerm = "usb stick";   //empty search term
-        int numOfResults = 30;
+        String searchTerm = randomSearchTerm();
+        int numOfResults = 60;
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, searchTerm);
         List<WebElement> results = ScreenScraper.getResults(driver, numOfResults);
@@ -131,7 +163,9 @@ public class ScreenScraperTest
         //will return only as many products as there are
         assertNotEquals(results.size(), numOfResults);
     }
+    */
 
+    /*
     @Test
     public void testVisitResult(){
         String searchTerm = "case";
@@ -144,24 +178,25 @@ public class ScreenScraperTest
         //verify this element exists, it only exists on a product page
         assertNotNull(driver.findElement(By.className("product-info-main")));
     }
+    */
 
     @Test
     public void testParseResult(){
-        String searchTerm = "phone";
-        int numOfResults = 3;
+        String searchTerm = randomSearchTerm();
+        int numOfResults = randomInt(1, 10);
+        
+        int alertType = randomInt(1, 6);
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, searchTerm);
-        WebElement result = ScreenScraper.getResults(driver, numOfResults).get(0);
+        String link = ScreenScraper.getResultLinks(driver, numOfResults).get(0);
+        driver.get(link);
 
-        AlertItem alert;
-        ScreenScraper.visitResult(driver, result);
-
-        alert = ScreenScraper.parseResult(driver);
-        assertFalse(alert.getTitle().isEmpty());
-        assertFalse(alert.getDescription().isEmpty());
-        assertFalse(alert.getUrl().isEmpty());
-        assertFalse(alert.getImageUrl().isEmpty());
-        assertTrue(alert.getPriceInCents() > 0);
+        Product product = ScreenScraper.parseResult(driver, username, alertType);
+        assertFalse(product.getHeading().isEmpty());
+        assertFalse(product.getDescription().isEmpty());
+        assertFalse(product.getUrl().isEmpty());
+        assertFalse(product.getImageUrl().isEmpty());
+        assertTrue(product.getPriceInCents() > 0);
     }
 
     @Test
@@ -200,7 +235,7 @@ public class ScreenScraperTest
 
     //generates a new AlertItem with each attribute randomly selected
     //TODO: MAKE THE DATA IN THE OBJECT TRULY RANDOM
-    public AlertItem randomAlert(){
+    public Product randomAlert(){
         String possibleHeadings[] = {
             "Apple MacBook Air 13\" Retina M1 Chip 256GB SSD 8GB RAM Gold (Ex Display)",
             "Apple iPhone SE (2022) 256GB (PRODUCT)RED",
@@ -229,11 +264,13 @@ public class ScreenScraperTest
             "https://www.scanmalta.com/shop/pub/media/catalog/product/cache/51cb816cf3b30ca1f94fc6cfcae49286/7/c/7c274328-be64-4f90-95cb-72be5e22177e_1_1.jpg"
         };
 
-        AlertItem alert = new AlertItem();
-        alert.setTitle(possibleHeadings[randomInt(0, 3)]);
+        Product alert = new Product();
+        alert.setAlertType(randomInt(1, 6));
+        alert.setHeading(possibleHeadings[randomInt(0, 3)]);
         alert.setDescription(possibleDescriptions[randomInt(0, 3)]);
         alert.setUrl(possibleUrls[randomInt(0, 3)]);
         alert.setImageUrl(possibleImageUrls[randomInt(0, 3)]);
+        alert.setPostedBy(username);
         alert.setPriceInCents(randomInt(0, 1000000));
         
         return alert;
@@ -242,24 +279,27 @@ public class ScreenScraperTest
     @Test
     public void testAlertToJson(){
 
-        AlertItem alert = randomAlert();
-        JSONObject json = ScreenScraper.alertToJson(alert, 0, username);
+        Product alert = randomAlert();
+        // int alertType = randomInt(1, 6);
+        // JSONObject json = ScreenScraper.alertToJson(alert, alertType, username);
+        JSONObject json = alert.toJson();
 
-        assertEquals(0, json.get("alertType"));
-        assertEquals(alert.getTitle(), json.get("heading"));
+        assertEquals(alert.getAlertType(), json.get("alertType"));
+        assertEquals(alert.getHeading(), json.get("heading"));
         assertEquals(alert.getDescription(), json.get("description"));
         assertEquals(alert.getUrl(), json.get("url"));
         assertEquals(alert.getImageUrl(), json.get("imageUrl"));
-        assertEquals(username, json.get("postedBy"));
+        assertEquals(alert.getPostedBy(), json.get("postedBy"));
         assertEquals(alert.getPriceInCents(), json.get("priceInCents"));
     }
 
     @Test
     public void testPostAlert(){
-        AlertItem randomAlert = randomAlert();        
-        JSONObject jsonAlert = ScreenScraper.alertToJson(randomAlert, randomInt(1, 6), username);
+        Product product = randomAlert();        
+        // JSONObject jsonAlert = ScreenScraper.alertToJson(randomAlert, randomInt(1, 6), username);
+        JSONObject jsonProduct = product.toJson();
 
-        int statusCode = ScreenScraper.postAlert(driver, jsonAlert);
+        int statusCode = ScreenScraper.postAlert(driver, jsonProduct);
         assertEquals(statusCode, 201);
 
         // TODO: CHECK THE ACTUAL VALUES OF THE RESPONSE OBJECT
@@ -281,10 +321,11 @@ public class ScreenScraperTest
     public void testGetAlerts(){
         ScreenScraper.deleteAlerts(driver, username);
 
-        AlertItem item = randomAlert();
-        JSONObject jsonAlert = ScreenScraper.alertToJson(item, randomInt(1, 6), username);
+        Product product = randomAlert();
+        // JSONObject jsonAlert = ScreenScraper.alertToJson(item, randomInt(1, 6), username);
+        JSONObject jsonProduct = product.toJson();
     
-        ScreenScraper.postAlert(driver, jsonAlert);
+        ScreenScraper.postAlert(driver, jsonProduct);
 
         logIn();
 
@@ -292,7 +333,8 @@ public class ScreenScraperTest
 
         List<WebElement> trs = alert.findElements(By.tagName("tr"));
         String heading = trs.get(0).getText();
-        String imageUrl = trs.get(0)
+        //TODO: REMOVE THE "(JUST NOW)" from the text
+        String imageUrl = trs.get(1)
             .findElement(By.tagName("img"))
             .getAttribute("src");
         String description = trs.get(2).getText();
@@ -301,12 +343,12 @@ public class ScreenScraperTest
         .findElement(By.tagName("a"))
         .getAttribute("href");
 
-        assertEquals(item.getTitle(), heading);
-        assertEquals(item.getDescription(), description);
-        assertEquals(item.getUrl(), url);
-        assertEquals(item.getImageUrl(), imageUrl);
+        
+        assertEquals(product.getHeading(), heading);
+        assertEquals(product.getDescription(), description);
+        assertEquals(product.getUrl(), url);
+        assertEquals(product.getImageUrl(), imageUrl);
         // assertTrue(priceInText.contains(item.getPriceInCents().toString());
-        assertEquals(item.getTitle(), heading);
     }
 
     @Test
@@ -327,5 +369,4 @@ public class ScreenScraperTest
     public void testLogOutMarketAlert(){
         assertTrue(false);
     }
-
 }

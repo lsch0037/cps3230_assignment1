@@ -2,8 +2,9 @@ package com.lsch0037.cps3230;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.json.Json;
 import org.json.JSONObject;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,19 +12,40 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
 
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-
 import java.util.List;
 import java.util.LinkedList;
 
 public class ScreenScraper 
 {
     public static void main( String[] args ) throws Exception {
+        // String userId = args[1];
+        // String searchTerm = args[2];
+        // String itemType = args[3];
+        // String numOfItems = args[4];
+        
+        //TODO: REMOVE THIS BEFORE RELEASE
+        String userId = "21ed7a53-ff36-4daf-8da0-c8b66b11c0de";
+        int numOfItems = 5;
+        int alertType = 6;
+        //TODO: REMOVE THIS BEFORE RELEASE
+
         System.setProperty("webdriver.chrome.driver", "C:\\chromedriver\\chromedriver.exe");
         WebDriver driver = new ChromeDriver();
-        getResults(driver, 5);
+
+        deleteAlerts(driver, userId);
+
+        visitScan(driver);
+        searchScan(driver, "bluetooth speaker");
+        List<String> reslutLinks = getResultLinks(driver, numOfItems);
+
+        for (String link : reslutLinks) {
+            driver.get(link); 
+            Product product = parseResult(driver, userId, alertType);
+            // JSONObject productJson = alertToJson(product, alertType, userId);
+            JSONObject productJson = product.toJson();
+            
+            postAlert(driver, productJson);
+        }
 
         driver.quit();
     }
@@ -59,18 +81,23 @@ public class ScreenScraper
         return false;
     }
 
-    public static List<WebElement> getResults(WebDriver driver, int x){
-        
+    public static List<String> getResultLinks(WebDriver driver, int numOfResults){
         //if message for no results found exists
         if(!driver.findElements(By.className("message")).isEmpty())
-            return new LinkedList<WebElement>();    //return empty list
+            return new LinkedList<String>();    //return empty list
 
         //find product list element
         WebElement resultList = driver.findElement(By.tagName("ol"));
         //list of all product elements
         List<WebElement> results = resultList.findElements(By.className("item"));
 
-        return results.subList(0, x - 1);
+        List<String> links = new LinkedList<String>();
+
+        for(WebElement result : results){
+            links.add(result.findElement(By.tagName("a")).getAttribute("href"));
+        }
+
+        return links.subList(0, numOfResults);
     }
 
     //navigates to the page of the given product
@@ -81,7 +108,8 @@ public class ScreenScraper
     }
 
     //Given the results, returns a corresponding AlertItem object with all the matching details
-    public static AlertItem parseResult(WebDriver driver){
+    //TODO: POSSIBLE SPLIT THIS UP INTO parseHeading, parseDescription.....
+    public static Product parseResult(WebDriver driver, String userId, int alertType){
 
         //title
         String title = driver.findElement(By.className("page-title-wrapper")).getText();
@@ -98,22 +126,27 @@ public class ScreenScraper
         String url = driver.getCurrentUrl();
 
         //ImageUrl
-        String imageUrl = driver.findElement(By.className("fotorama__active"))
-        .findElement(By.tagName("img")).getAttribute("src");
+        String imageUrl = driver.findElement(By.className("gallery-container"))
+            .findElement(By.tagName("img"))
+            .getAttribute("src");
 
         //Price
         WebElement priceBox = driver.findElement(By.className("price-box"));
         WebElement priceElement = priceBox.findElement(By.className("price"));
         String priceText = priceElement.getText();
-        String priceCleaned = priceText.replaceAll("€", "").replace(".", "");
+        String priceCleaned = priceText.replaceAll("€", "")
+        .replace(".", "")
+        .replace(",", "");
         int priceInCents = Integer.parseInt(priceCleaned);
 
         //Create new alert item with the acquired info
-        AlertItem alert = new AlertItem();
-        alert.setTitle(title);
+        Product alert = new Product();
+        alert.setAlertType(alertType);
+        alert.setHeading(title);
         alert.setDescription(description);
         alert.setUrl(url);
         alert.setImageUrl(imageUrl);
+        alert.setPostedBy(userId);
         alert.setPriceInCents(priceInCents);
 
         //return alert
@@ -135,10 +168,11 @@ public class ScreenScraper
         inputs.get(1).click();
     }
 
-    public static JSONObject alertToJson(AlertItem alert, int alertType, String username){
+    /*
+    public static JSONObject alertToJson(Product alert, int alertType, String username){
         JSONObject object = new JSONObject();
         object.put("alertType", alertType);
-        object.put("heading", alert.getTitle());
+        object.put("heading", alert.getHeading());
         object.put("description", alert.getDescription());
         object.put("url", alert.getUrl());
         object.put("imageUrl", alert.getImageUrl());
@@ -147,6 +181,7 @@ public class ScreenScraper
 
         return object;
     }
+    */
 
     //attempts to post the json object to the api
     //returns the statusCode of the response or -1 upon failure to send
@@ -169,6 +204,7 @@ public class ScreenScraper
         }catch(Exception e){
             return -1;
         }
+
 
         return response.statusCode();
     }
