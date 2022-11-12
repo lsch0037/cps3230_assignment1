@@ -2,7 +2,14 @@ package com.lsch0037.cps3230;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.json.Json;
+import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublishers;
 
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
@@ -13,7 +20,6 @@ import java.util.LinkedList;
 
 public class ScreenScraper 
 {
-
     public static void main( String[] args ) throws Exception {
         System.setProperty("webdriver.chrome.driver", "C:\\chromedriver\\chromedriver.exe");
         WebDriver driver = new ChromeDriver();
@@ -114,23 +120,85 @@ public class ScreenScraper
         return alert;
     }
 
-    public static void logInMarketAlert(WebDriver driver){
+    public static void goToLogIn(WebDriver driver){
+        WebElement logInButton = driver.findElements(By.className("nav-item")).get(2);
+        String link = logInButton.findElement(By.tagName("a")).getAttribute("href");
 
+        driver.get(link);
     }
 
-    public static void viewAlerts(WebDriver driver){
+    public static void logIn(WebDriver driver, String username){
+        WebElement form = driver.findElement(By.tagName("form"));
+        List<WebElement> inputs = form.findElements(By.tagName("input"));
 
+        inputs.get(0).sendKeys(username);
+        inputs.get(1).click();
+    }
+
+    public static JSONObject alertToJson(AlertItem alert, int alertType, String username){
+        JSONObject object = new JSONObject();
+        object.put("alertType", alertType);
+        object.put("heading", alert.getTitle());
+        object.put("description", alert.getDescription());
+        object.put("url", alert.getUrl());
+        object.put("imageUrl", alert.getImageUrl());
+        object.put("postedBy",  username);
+        object.put("priceInCents", alert.getPriceInCents());
+
+        return object;
+    }
+
+    //attempts to post the json object to the api
+    //returns the statusCode of the response or -1 upon failure to send
+    //TODO: CHANGE THIS TO RETURN THE RESPONSE OBJECT AS OPPOSED TO THE STATUSCODE
+    public static int postAlert(WebDriver driver, JSONObject json){
+
+        //https://api.marketalertum.com/Alert
+
+        HttpClient client = HttpClient.newHttpClient();
+        
+        HttpRequest request = HttpRequest.newBuilder(
+            URI.create("https://api.marketalertum.com/Alert"))
+        .header("Content-Type", "application/json")
+        .POST(BodyPublishers.ofString(json.toString()))
+        .build();
+        
+        HttpResponse<String> response;
+        try{
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }catch(Exception e){
+            return -1;
+        }
+
+        return response.statusCode();
+    }
+
+    public static int deleteAlerts(WebDriver driver, String username){
+        HttpClient client = HttpClient.newHttpClient();
+        
+        HttpRequest request = HttpRequest.newBuilder(
+            URI.create("https://api.marketalertum.com/Alert?userId=" + username))
+        .DELETE()
+        .build();
+        
+        HttpResponse<String> response;
+        try{
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }catch(Exception e){
+            return -1;
+        }
+
+        return response.statusCode();
+    }
+
+    public static List<WebElement> getAlerts(WebDriver driver){
+        //refresh to ensure the information is up to date
+        driver.navigate().refresh();
+
+        return driver.findElements(By.tagName("table"));
     }
 
     public static void logOutMarketAlert(WebDriver driver){
-
-    }
-
-    public static void postAlert(WebDriver driver){
-
-    }
-
-    public static void deleteAlerts(WebDriver driver){
 
     }
 }

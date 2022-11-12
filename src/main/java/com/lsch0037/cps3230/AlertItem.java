@@ -1,29 +1,21 @@
 package com.lsch0037.cps3230;
 
 public class AlertItem {
-    //int type;
-    String title;
-    String description;
-    String url;
-    String imageUrl;
-    int priceInCents;
+    //TODO: GIVE THIS CLASS AND ITS ATTRIBUTES BETTER NAMES
+    private String title;
+    private String description;
+    private String url;
+    private String imageUrl;
+    private int priceInCents;
+    //TODO: MAKE THE USERID AND THE ALERTTYPE PART OF THIS OBJECT
 
+
+    //TODO: MAKE A BETTER WAY OF INITIALISING THIS
     public void AlertItem(){
         int x = 0;
     }
 
-
     //Getters and Setters
-    /*
-    public int getType(){
-        return this.type;
-    }
-
-    public void setType(int type){
-        this.type = type;
-    }
-    */
-
     public String getTitle(){
         return this.title;
     }
@@ -47,16 +39,6 @@ public class AlertItem {
     public void setUrl(String url){
         this.url = url;
     }
-
-    /*
-    public String getPostedBy(){
-        return this.postedBy;
-    }
-
-    public void setPostedBy(String postedBy){
-        this.postedBy = postedBy;
-    }
-    */
 
     public String getImageUrl(){
         return this.imageUrl;
