@@ -7,7 +7,7 @@ public class ScanHome extends PageObject {
     @FindBy(id = "search")
     private WebElement searchBar;
         
-    @FindBy(tagName = "button")
+    @FindBy(xpath = "//button[@type='submit']")
     private WebElement searchButton;
 
     public ScanHome(WebDriver driver){

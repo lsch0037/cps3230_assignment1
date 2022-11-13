@@ -143,26 +143,6 @@ public class ScreenScraperTest
         assertTrue(false);
     }
 
-    /*
-    @Test
-    public void testGetResultLinks(){
-        String searchTerm = randomSearchTerm();
-        int numOfResults = randomInt(1, 10);
-
-        ScreenScraper.visitScan(driver);
-        ScreenScraper.searchScan(driver, searchTerm);
-        List<String> links = ScreenScraper.getResultLinks(driver, numOfResults);
-
-        for(String link : links){
-            //Visit each link
-            driver.get(link);
-
-            //verify this element exists, it only exists on a product page
-            assertNotNull(driver.findElement(By.className("product-info-main")));
-        }
-    }
-    */
-
     @Test
     public void testGetResultLinks(){
         String searchTerm = randomSearchTerm();
@@ -193,26 +173,6 @@ public class ScreenScraperTest
         assertTrue(false);
     }
 
-    /*
-    @Test
-    public void testParseResult(){
-        String searchTerm = randomSearchTerm();
-        int numOfResults = randomInt(1, 10);
-        
-        int alertType = randomInt(1, 6);
-        ScreenScraper.visitScan(driver);
-        ScreenScraper.searchScan(driver, searchTerm);
-        String link = ScreenScraper.getResultLinks(driver, numOfResults).get(0);
-        driver.get(link);
-
-        Product product = ScreenScraper.parseResult(driver, username, alertType);
-        assertFalse(product.getHeading().isEmpty());
-        assertFalse(product.getDescription().isEmpty());
-        assertFalse(product.getUrl().isEmpty());
-        assertFalse(product.getImageUrl().isEmpty());
-        assertTrue(product.getPriceInCents() > 0);
-    }
-*/
     @Test
     public void testParseResult(){
         String searchTerm = randomSearchTerm();
@@ -237,6 +197,8 @@ public class ScreenScraperTest
         assertNotNull(product.get("imageUrl"));
         assertFalse(((String)product.get("imageUrl")).isBlank());
 
+        assertEquals(((String)product.get("postedBy")), username);
+
         assertTrue((int)product.get("priceInCents") > 0);
     }
 
@@ -248,20 +210,17 @@ public class ScreenScraperTest
     @Test
     public void testGoToLogIn(){
         ScreenScraper.visitMarketAlert(driver);
-        ScreenScraper.goToLogIn(driver);
+        ScreenScraper.goToLogIn(driver, marketAlertHome);
 
-        WebElement form = driver.findElement(By.tagName("form"));
-        
-        assertNotNull(form);
-
-        assertEquals(form.getText(), "User ID:");
+        // assertEquals(driver.getCurrentUrl(), "https://www.marketalertum.com/Alerts/Login");
+        assertTrue(marketAlertLogin.isOnLogInPage());
     }
 
     //logs into marketAlertUm with the given username
     public void logIn(){
         ScreenScraper.visitMarketAlert(driver);
-        ScreenScraper.goToLogIn(driver);
-        ScreenScraper.logIn(driver, username);
+        ScreenScraper.goToLogIn(driver, marketAlertHome);
+        ScreenScraper.logIn(driver, marketAlertLogin, username);
     }
 
     @Test
@@ -269,9 +228,7 @@ public class ScreenScraperTest
         //log in to marketAlertUm
         logIn();
 
-        //test that the "Latest Alerts for <User Name>" message appears
-        String heading = driver.findElement(By.tagName("main")).getText();
-        assertTrue(heading.contains("Latest alerts for "));
+        assertTrue(marketAlertAlerts.isOnAlertsPage());
     }
 
     @Test

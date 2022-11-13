@@ -7,5 +7,12 @@ public class MarketAlertAlerts extends PageObject{
     public MarketAlertAlerts(WebDriver driver){
         super(driver);
     }
+
+    public boolean isOnAlertsPage(){
+        if(driver.getCurrentUrl().equals("https://www.marketalertum.com/Alerts/List"))
+            return true;
+
+        return false;
+    }
     
 }

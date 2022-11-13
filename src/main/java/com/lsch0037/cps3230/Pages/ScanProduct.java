@@ -15,7 +15,7 @@ public class ScanProduct extends PageObject{
     @FindBy(className = "overview")
     private WebElement descriptionElement;
 
-    @FindBy(xpath = "//div[@id='mpfotorama']/div/div[1]")
+    @FindBy(xpath = "//img[@class='fotorama__img']")
     private WebElement imageElement;
 
     @FindBy(className = "price-box")
@@ -44,7 +44,7 @@ public class ScanProduct extends PageObject{
     }
 
     public String getImageUrl(){
-        return imageElement.findElement(By.tagName("img")).getAttribute("src");
+        return imageElement.getAttribute("src");
     }
 
     public int getPriceInCents(){
@@ -54,5 +54,9 @@ public class ScanProduct extends PageObject{
         .replace(".", "")
         .replace(",", "");
         return Integer.parseInt(priceCleaned);
+    }
+
+    public boolean isOnProductPage(){
+        return false;
     }
 }
