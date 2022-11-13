@@ -1,5 +1,10 @@
 package com.lsch0037.cps3230;
 
+import com.lsch0037.cps3230.Pages.PageObject;
+import com.lsch0037.cps3230.Pages.ScanHome;
+import com.lsch0037.cps3230.Pages.ScanProduct;
+import com.lsch0037.cps3230.Pages.ScanResults;
+
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.json.JSONObject;
@@ -17,6 +22,10 @@ import java.util.LinkedList;
 
 public class ScreenScraper 
 {
+    // static WebDriver driver = new ChromeDriver();
+    // static ScanHome scanHome = new ScanHome(driver);
+
+    //TODO: REMOVE THIS TO ITS OWN Main.java CLASS
     public static void main( String[] args ) throws Exception {
         // String userId = args[1];
         // String searchTerm = args[2];
@@ -62,6 +71,13 @@ public class ScreenScraper
         driver.get("https://www.marketalertum.com/");
     }
 
+    public static void searchScan(WebDriver driver, ScanHome scanHome, String searchTerm){
+        scanHome.enterSearchTerm(searchTerm);
+        scanHome.pressSearchButton();
+
+    }
+
+    /*
     public static boolean searchScan(WebDriver driver, String searchTerm){
         //get the web elements
         WebElement searchBar = driver.findElement(By.id("search"));
@@ -80,7 +96,9 @@ public class ScreenScraper
         //in case no search button is found
         return false;
     }
+    */
 
+    /*
     public static List<String> getResultLinks(WebDriver driver, int numOfResults){
         //if message for no results found exists
         if(!driver.findElements(By.className("message")).isEmpty())
@@ -99,14 +117,18 @@ public class ScreenScraper
 
         return links.subList(0, numOfResults);
     }
+    */
+
+    public static List<String> getResultLinks(WebDriver driver, ScanResults scanResults, int numOfResults){
+        return scanResults.getResultLinks(numOfResults);
+    }
 
     //navigates to the page of the given product
-    public static void visitResult(WebDriver driver, WebElement result){
-        String link = result.findElement(By.tagName("a")).getAttribute("href");
-        
+    public static void visitResult(WebDriver driver, String link){
         driver.get(link);
     }
 
+/*
     //Given the results, returns a corresponding AlertItem object with all the matching details
     //TODO: POSSIBLE SPLIT THIS UP INTO parseHeading, parseDescription.....
     public static Product parseResult(WebDriver driver, String userId, int alertType){
@@ -152,6 +174,20 @@ public class ScreenScraper
         //return alert
         return alert;
     }
+    */
+
+    public static JSONObject parseResult(WebDriver driver, ScanProduct scanProduct, String userId, int alertType){
+        JSONObject object = new JSONObject();
+        object.put("alertType", alertType);
+        object.put("heading", scanProduct.getHeading());
+        object.put("description", scanProduct.getDescription());
+        object.put("url", scanProduct.getUrl());
+        object.put("imageUrl", scanProduct.getImageUrl());
+        object.put("postedBy", userId);
+        object.put("priceInCents", scanProduct.getPriceInCents());
+
+        return object;
+    }
 
     public static void goToLogIn(WebDriver driver){
         WebElement logInButton = driver.findElements(By.className("nav-item")).get(2);
@@ -167,21 +203,6 @@ public class ScreenScraper
         inputs.get(0).sendKeys(username);
         inputs.get(1).click();
     }
-
-    /*
-    public static JSONObject alertToJson(Product alert, int alertType, String username){
-        JSONObject object = new JSONObject();
-        object.put("alertType", alertType);
-        object.put("heading", alert.getHeading());
-        object.put("description", alert.getDescription());
-        object.put("url", alert.getUrl());
-        object.put("imageUrl", alert.getImageUrl());
-        object.put("postedBy",  username);
-        object.put("priceInCents", alert.getPriceInCents());
-
-        return object;
-    }
-    */
 
     //attempts to post the json object to the api
     //returns the statusCode of the response or -1 upon failure to send
