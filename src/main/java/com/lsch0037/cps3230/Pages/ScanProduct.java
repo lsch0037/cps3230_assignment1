@@ -1,78 +1,58 @@
 package com.lsch0037.cps3230.Pages;
 
+import java.util.List;
+
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
 
 public class ScanProduct extends PageObject{
+
+    @FindBy(className = "page-title-wrapper")
+    private WebElement titleElement;
+
+    @FindBy(className = "overview")
+    private WebElement descriptionElement;
+
+    @FindBy(xpath = "//div[@id='mpfotorama']/div/div[1]")
+    private WebElement imageElement;
+
+    @FindBy(className = "price-box")
+    private WebElement priceElement;
 
     public ScanProduct(WebDriver driver){
         super(driver);
     }
 
     public String getHeading(){
-
+        return titleElement.getText();
     }
 
     public String getDescription(){
-
-    }
-
-    public String getUrl(){
-
-    }
-
-    public String getImageUrl(){
-
-    }
-
-    public int getPriceInCents(){
-
-    }
-
-/*
-    //Given the results, returns a corresponding AlertItem object with all the matching details
-    //TODO: POSSIBLE SPLIT THIS UP INTO parseHeading, parseDescription.....
-    public static Product parseResult(WebDriver driver, String userId, int alertType){
-
-        //title
-        String title = driver.findElement(By.className("page-title-wrapper")).getText();
-
-        //description
-        WebElement quickOverview = driver.findElement(By.className("overview"));
-        List<WebElement> descriptionPoints = quickOverview.findElements(By.tagName("li"));
+        List<WebElement> descriptionPoints = descriptionElement.findElements(By.tagName("li"));
 
         String description = "";
         for(WebElement point: descriptionPoints)
             description = description + point.getText() + " ";
 
-        //Url
-        String url = driver.getCurrentUrl();
+        return description;
+    }
 
-        //ImageUrl
-        String imageUrl = driver.findElement(By.className("gallery-container"))
-            .findElement(By.tagName("img"))
-            .getAttribute("src");
+    public String getUrl(){
+        return driver.getCurrentUrl();
+    }
 
-        //Price
-        WebElement priceBox = driver.findElement(By.className("price-box"));
-        WebElement priceElement = priceBox.findElement(By.className("price"));
-        String priceText = priceElement.getText();
+    public String getImageUrl(){
+        return imageElement.findElement(By.tagName("img")).getAttribute("src");
+    }
+
+    public int getPriceInCents(){
+        WebElement priceElementInner = priceElement.findElement(By.className("price"));
+        String priceText = priceElementInner.getText();
         String priceCleaned = priceText.replaceAll("€", "")
         .replace(".", "")
         .replace(",", "");
-        int priceInCents = Integer.parseInt(priceCleaned);
-
-        //Create new alert item with the acquired info
-        Product alert = new Product();
-        alert.setAlertType(alertType);
-        alert.setHeading(title);
-        alert.setDescription(description);
-        alert.setUrl(url);
-        alert.setImageUrl(imageUrl);
-        alert.setPostedBy(userId);
-        alert.setPriceInCents(priceInCents);
-
-        //return alert
-        return alert;
+        return Integer.parseInt(priceCleaned);
     }
-    */
 }

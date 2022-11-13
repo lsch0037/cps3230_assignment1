@@ -173,7 +173,7 @@ public class ScreenScraperTest
 
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, scanHome, searchTerm);
-        List<String> links = ScreenScraper.getResultsLinks(driver, scanResults, numOfResults);
+        List<String> links = ScreenScraper.getResultLinks(driver, scanResults, numOfResults);
 
 
         //Verify
@@ -218,19 +218,26 @@ public class ScreenScraperTest
         String searchTerm = randomSearchTerm();
         int alertType = randomInt(1, 6);
 
-
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, scanHome, searchTerm);
         String link = ScreenScraper.getResultLinks(driver, scanResults, 1).get(0);
-        // driver.get(link);
         ScreenScraper.visitResult(driver, link);
 
-        Product product = ScreenScraper.parseResult(driver, username, alertType);
-        assertFalse(product.getHeading().isEmpty());
-        assertFalse(product.getDescription().isEmpty());
-        assertFalse(product.getUrl().isEmpty());
-        assertFalse(product.getImageUrl().isEmpty());
-        assertTrue(product.getPriceInCents() > 0);
+        JSONObject product = ScreenScraper.parseResult(driver, scanProduct, username, alertType);
+
+        assertNotNull(product.get("heading"));
+        assertFalse(((String)product.get("heading")).isBlank());
+        
+        assertNotNull(product.get("description"));
+        assertFalse(((String)product.get("description")).isBlank());
+
+        assertNotNull(product.get("url"));
+        assertFalse(((String)product.get("url")).isBlank());
+
+        assertNotNull(product.get("imageUrl"));
+        assertFalse(((String)product.get("imageUrl")).isBlank());
+
+        assertTrue((int)product.get("priceInCents") > 0);
     }
 
     @Test
