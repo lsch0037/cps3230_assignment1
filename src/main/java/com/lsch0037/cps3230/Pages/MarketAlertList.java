@@ -1,10 +1,14 @@
 package com.lsch0037.cps3230.Pages;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
-public class MarketAlertAlerts extends PageObject{
+public class MarketAlertList extends PageObject{
 
-    public MarketAlertAlerts(WebDriver driver){
+    public MarketAlertList(WebDriver driver){
         super(driver);
     }
 
@@ -13,6 +17,11 @@ public class MarketAlertAlerts extends PageObject{
             return true;
 
         return false;
+    }
+
+    public List<WebElement> getAlerts(){
+
+        return new LinkedList<WebElement>();
     }
     
 }

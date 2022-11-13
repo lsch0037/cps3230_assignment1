@@ -1,6 +1,6 @@
 package com.lsch0037.cps3230;
 
-import com.lsch0037.cps3230.Pages.MarketAlertAlerts;
+import com.lsch0037.cps3230.Pages.MarketAlertList;
 import com.lsch0037.cps3230.Pages.MarketAlertHome;
 import com.lsch0037.cps3230.Pages.MarketAlertLogin;
 import com.lsch0037.cps3230.Pages.PageObject;
@@ -21,13 +21,35 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpRequest.BodyPublishers;
 
 import java.util.List;
-import java.util.LinkedList;
 
 public class ScreenScraper 
 {
-    //TODO: REMOVE THIS TO ITS OWN Main.java CLASS
     public static void main( String[] args ) throws Exception {
         System.out.println("Hello World");
+
+        System.setProperty("webdriver.chrome.driver", "C:\\chromedriver\\chromedriver.exe");
+        String userId = "21ed7a53-ff36-4daf-8da0-c8b66b11c0de";
+
+        WebDriver driver = new ChromeDriver();
+        ScanHome scanHome = new ScanHome(driver);
+        ScanResults scanResults = new ScanResults(driver);
+        ScanProduct scanProduct = new ScanProduct(driver);
+        MarketAlertHome marketAlertHome = new MarketAlertHome(driver);
+        MarketAlertLogin marketAlertLogin = new MarketAlertLogin(driver);
+        MarketAlertList marketAlertList = new MarketAlertList(driver);
+
+        deleteAlerts(driver, userId);
+
+        visitScan(driver); 
+        searchScan(driver, scanHome, "macbook");
+        List<String> links = getResultLinks(driver, scanResults, 5);
+
+        JSONObject product;
+        for (String link : links) {
+            visitResult(driver, link);
+            product = parseResult(driver, scanProduct, userId, 1);
+            postAlert(driver, product);
+        }
     }
 
     //nagivates to the amazon website
@@ -43,9 +65,7 @@ public class ScreenScraper
     }
 
     public static void searchScan(WebDriver driver, ScanHome scanHome, String searchTerm){
-        scanHome.enterSearchTerm(searchTerm);
-        scanHome.pressSearchButton();
-
+        scanHome.search(searchTerm);
     }
 
     public static List<String> getResultLinks(WebDriver driver, ScanResults scanResults, int numOfResults){
@@ -81,10 +101,7 @@ public class ScreenScraper
 
     //attempts to post the json object to the api
     //returns the statusCode of the response or -1 upon failure to send
-    //TODO: CHANGE THIS TO RETURN THE RESPONSE OBJECT AS OPPOSED TO THE STATUSCODE
-    public static int postAlert(WebDriver driver, JSONObject json){
-
-        //https://api.marketalertum.com/Alert
+    public static HttpResponse postAlert(WebDriver driver, JSONObject json){
 
         HttpClient client = HttpClient.newHttpClient();
         
@@ -94,17 +111,15 @@ public class ScreenScraper
         .POST(BodyPublishers.ofString(json.toString()))
         .build();
         
-        HttpResponse<String> response;
         try{
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> res = client.send(request, HttpResponse.BodyHandlers.ofString());
+            return res;
         }catch(Exception e){
-            return -1;
+            return null;
         }
-
-
-        return response.statusCode();
     }
 
+    //TODO: CHANGE THIS TO RETURN THE RESPONSE OBJECT AS OPPOSED TO THE STATUSCODE
     public static int deleteAlerts(WebDriver driver, String username){
         HttpClient client = HttpClient.newHttpClient();
         

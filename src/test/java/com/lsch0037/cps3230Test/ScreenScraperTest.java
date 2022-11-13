@@ -3,13 +3,12 @@ package com.lsch0037.cps3230Test;
 import com.lsch0037.cps3230.ScreenScraper;
 import com.lsch0037.cps3230.Pages.MarketAlertHome;
 import com.lsch0037.cps3230.Pages.MarketAlertLogin;
-import com.lsch0037.cps3230.Pages.MarketAlertAlerts;
+import com.lsch0037.cps3230.Pages.MarketAlertList;
 import com.lsch0037.cps3230.Pages.ScanHome;
 import com.lsch0037.cps3230.Pages.ScanProduct;
 import com.lsch0037.cps3230.Pages.ScanResults;
 
-import com.lsch0037.cps3230.Product;
-
+import java.net.http.HttpResponse;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -24,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.json.Json;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
 
@@ -35,7 +35,7 @@ public class ScreenScraperTest
     ScanProduct scanProduct;
     MarketAlertHome marketAlertHome;
     MarketAlertLogin marketAlertLogin;
-    MarketAlertAlerts marketAlertAlerts;
+    MarketAlertList marketAlertList;
 
     //TODO: REMOVE THIS BEFORE RELEASE
     String username = "21ed7a53-ff36-4daf-8da0-c8b66b11c0de";
@@ -67,7 +67,7 @@ public class ScreenScraperTest
         scanProduct = new ScanProduct(driver);
         marketAlertHome = new MarketAlertHome(driver);
         marketAlertLogin = new MarketAlertLogin(driver);
-        marketAlertAlerts = new MarketAlertAlerts(driver);
+        marketAlertList = new MarketAlertList(driver);
     }
 
     @AfterEach
@@ -80,9 +80,8 @@ public class ScreenScraperTest
         //Visit amazon.com website
         ScreenScraper.visitScan(driver);
 
-        //Verify that the title is the same title
-        String title = driver.getTitle();
-        assertEquals(title, "Computers Store Malta | SCAN");
+        //TODO: REPLACE WITH scanHome.isOnScanHomePage()
+        assertTrue(scanHome.isOnScanHomePage());
     }
 
     @Test
@@ -92,6 +91,7 @@ public class ScreenScraperTest
 
         //Verify that the title is the same title
         String title = driver.getTitle();
+        //TODO: REPLACE WITH marketAlertHome.isOnMarketAlertHome()
         assertEquals(title, "Home Page - MarketAlertUM");
     }
 
@@ -112,21 +112,6 @@ public class ScreenScraperTest
         return searchTerms[randomInt(0, searchTerms.length)];
     }
 
-    /*
-    @Test
-    public void testSearchScan(){
-        String searchTerm = randomSearchTerm();
-        ScreenScraper.visitScan(driver);  //go to scanmalta
-        boolean success = ScreenScraper.searchScan(driver, searchTerm);   //search for "basketball"
-
-        assertTrue(success);
-
-        //Verify that the title is as expected when searching for a term
-        String resultText = driver.findElement(By.className("page-title")).getText();
-        assertEquals(resultText, "Search results for: '"+ searchTerm +"'");
-    }
-    */
-
     @Test
     public void testSearchScan(){
         // ScanHome scanHome = new ScanHome(driver);
@@ -134,13 +119,22 @@ public class ScreenScraperTest
         ScreenScraper.visitScan(driver);  //go to scanmalta
         ScreenScraper.searchScan(driver, scanHome, searchTerm);   //search for random search term
 
+        //TODO: REPLACE WITH scanResutls.isOnResultsPage()
         ScanResults scanResults = new ScanResults(driver);
         assertTrue(scanResults.foundResults());
+        
     }
 
     @Test 
     public void testSearchScanForInvalidTerm(){
-        assertTrue(false);
+        ScreenScraper.visitScan(driver);
+        
+        //Search for empty
+        ScreenScraper.searchScan(driver, scanHome, "");
+
+        //verify that
+        //we are not on the results page
+        assertFalse(scanResults.isOnResultsPage());
     }
 
     @Test
@@ -164,13 +158,38 @@ public class ScreenScraperTest
     @Test
     //Get result links of a product which has not results on scan
     public void testGetEmptyResults(){
-        assertTrue(false);
+        ScreenScraper.visitScan(driver);
+        
+        //Search scan for something that they do not offer
+        ScreenScraper.searchScan(driver, scanHome, "pumpkin");
+
+        //verify that
+        assertFalse(scanResults.foundResults());    //no results were found
+        assertTrue(scanResults.getResultLinks(10).isEmpty());   //result links are empty
+
     }
 
     @Test
     //Get result links of more results than are displayed
     public void testGetTooManyResults(){
-        assertTrue(false);
+        ScreenScraper.visitScan(driver);
+        
+        ScreenScraper.searchScan(driver, scanHome, "playstation");
+
+        List<String> links = ScreenScraper.getResultLinks(driver, scanResults, 100);
+
+        assertTrue(links.size() < 100); 
+    }
+
+    @Test
+    public void testVisitProduct(){
+        ScreenScraper.visitScan(driver);
+        ScreenScraper.searchScan(driver, scanHome, randomSearchTerm());
+        String link = ScreenScraper.getResultLinks(driver, scanResults, 1).get(0);
+
+        ScreenScraper.visitResult(driver, link);
+
+        assertTrue(scanProduct.isOnProductPage());
     }
 
     @Test
@@ -183,6 +202,7 @@ public class ScreenScraperTest
         String link = ScreenScraper.getResultLinks(driver, scanResults, 1).get(0);
         ScreenScraper.visitResult(driver, link);
 
+        //TODO: FIGURE OUT WHY THIS FAILS SOMETIMES
         JSONObject product = ScreenScraper.parseResult(driver, scanProduct, username, alertType);
 
         assertNotNull(product.get("heading"));
@@ -203,6 +223,7 @@ public class ScreenScraperTest
     }
 
     @Test
+    //TODO: CONSIDER WHETHER THIS IS NECCESSARY
     public void testParseResultInvalidPage(){
         assertTrue(false);
     }
@@ -228,12 +249,17 @@ public class ScreenScraperTest
         //log in to marketAlertUm
         logIn();
 
-        assertTrue(marketAlertAlerts.isOnAlertsPage());
+        assertTrue(marketAlertList.isOnAlertsPage());
     }
 
     @Test
     public void testLogInInvalidId(){
-        assertTrue(false);
+        ScreenScraper.visitMarketAlert(driver);
+        ScreenScraper.goToLogIn(driver, marketAlertHome);
+
+        ScreenScraper.logIn(driver, marketAlertLogin, "invalidId");
+
+        assertFalse(marketAlertList.isOnAlertsPage());
     }
 
     //returns a random number between max and min
@@ -243,7 +269,7 @@ public class ScreenScraperTest
 
     //generates a new AlertItem with each attribute randomly selected
     //TODO: MAKE THE DATA IN THE OBJECT TRULY RANDOM
-    public Product randomProduct(){
+    public JSONObject randomProduct(){
         String possibleHeadings[] = {
             "Apple MacBook Air 13\" Retina M1 Chip 256GB SSD 8GB RAM Gold (Ex Display)",
             "Apple iPhone SE (2022) 256GB (PRODUCT)RED",
@@ -272,84 +298,29 @@ public class ScreenScraperTest
             "https://www.scanmalta.com/shop/pub/media/catalog/product/cache/51cb816cf3b30ca1f94fc6cfcae49286/7/c/7c274328-be64-4f90-95cb-72be5e22177e_1_1.jpg"
         };
 
-        Product alert = new Product();
-        alert.setAlertType(randomInt(1, 6));
-        alert.setHeading(possibleHeadings[randomInt(0, 3)]);
-        alert.setDescription(possibleDescriptions[randomInt(0, 3)]);
-        alert.setUrl(possibleUrls[randomInt(0, 3)]);
-        alert.setImageUrl(possibleImageUrls[randomInt(0, 3)]);
-        alert.setPostedBy(username);
-        alert.setPriceInCents(randomInt(0, 1000000));
+        JSONObject product = new JSONObject();
+        product.put("alertType", randomInt(0, 6));
+        product.put("heading", possibleHeadings[randomInt(0, 3)]);
+        product.put("description", possibleDescriptions[randomInt(0, 3)]);
+        product.put("url", possibleUrls[randomInt(0, 3)]);
+        product.put("imageUrl", possibleImageUrls[randomInt(0, 3)]);
+        product.put("postedBy", username);
+        product.put("priceInCents", randomInt(0, 1000000));
         
-        return alert;
-    }
-
-    //TODO: MOVE THIS TO A TestProduct.java file
-    @Test
-    public void testProductToJson(){
-
-        Product product = randomProduct();
-        JSONObject json = product.toJson();
-
-        //verify the attributes of the JSONObject are the same as those of the product object
-        assertEquals(product.getAlertType(), json.get("alertType"));
-        assertEquals(product.getHeading(), json.get("heading"));
-        assertEquals(product.getDescription(), json.get("description"));
-        assertEquals(product.getUrl(), json.get("url"));
-        assertEquals(product.getImageUrl(), json.get("imageUrl"));
-        assertEquals(product.getPostedBy(), json.get("postedBy"));
-        assertEquals(product.getPriceInCents(), json.get("priceInCents"));
-    }
-
-    @Test 
-    public void testInvalidProductToJson(){
-        assertTrue(false);
+        return product;
     }
 
     @Test
     public void testPostProduct(){
-        Product product = randomProduct();
-        JSONObject jsonProduct = product.toJson();
+        JSONObject product = randomProduct();
 
-        //Verify the statuscode 201 for success is returned
-        int statusCode = ScreenScraper.postAlert(driver, jsonProduct);
-        assertEquals(statusCode, 201);
+        //post the alert
+        HttpResponse<String> response = ScreenScraper.postAlert(driver, product);
 
-        // TODO: CHECK THE ACTUAL VALUES OF THE RESPONSE OBJECT
+        //verify that
+        assertNotNull(response);    //send was successful
+        assertEquals(response.statusCode(), 201);   //statusCode is 201
     }
-
-    @Test
-    public void testPostProductInvalidAlertType(){
-        assertTrue(false);
-    }
-    
-    @Test
-    public void testPostProductInvalidHeading(){
-        assertTrue(false);
-    }
-
-    @Test
-    public void testPostProductInvalidDescription(){
-        assertTrue(false);
-    }
-
-    @Test
-    public void testPostProductInvalidUrl(){
-        assertTrue(false);
-    }
-    @Test
-    public void testPostProductInvalidImageUrl(){
-        assertTrue(false);
-    }
-    @Test
-    public void testPostProductInvalidPostedBy(){
-        assertTrue(false);
-    }
-    @Test
-    public void testPostProductInvalidPriceInCents(){
-        assertTrue(false);
-    }
-
 
     //returns all the alerts currently on the marketAlertUm website
     //returns empty list if there are no alerts
@@ -367,9 +338,8 @@ public class ScreenScraperTest
     public void testGetAlerts(){
         ScreenScraper.deleteAlerts(driver, username);
 
-        Product product = randomProduct();
-        JSONObject jsonProduct = product.toJson();
-        ScreenScraper.postAlert(driver, jsonProduct);
+        JSONObject product = randomProduct();
+        ScreenScraper.postAlert(driver, product);
         logIn();
 
         
@@ -400,11 +370,13 @@ public class ScreenScraperTest
 
         
         //TODO: SOMEHOW TEST ALERTTYPE
-        assertTrue(heading.startsWith(product.getHeading(), 0));
-        assertEquals(product.getDescription(), description);
-        assertEquals(product.getUrl(), url);
-        assertEquals(product.getImageUrl(), imageUrl);
-        assertEquals(Integer.toString(product.getPriceInCents()), priceCleaned);
+        // assertTrue(heading.startsWith(product.getHeading(), 0));
+        // assertEquals(product.getDescription(), description);
+        // assertEquals(product.getUrl(), url);
+        // assertEquals(product.getImageUrl(), imageUrl);
+        // assertEquals(Integer.toString(product.getPriceInCents()), priceCleaned);
+
+        // assertEquals(, null);
     }
 
     @Test 

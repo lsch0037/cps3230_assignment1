@@ -12,7 +12,8 @@ public class ScanProduct extends PageObject{
     @FindBy(className = "page-title-wrapper")
     private WebElement titleElement;
 
-    @FindBy(className = "overview")
+    // @FindBy(className = "overview")
+    @FindBy(xpath = "//div[@itemProp='description']")
     private WebElement descriptionElement;
 
     @FindBy(xpath = "//img[@class='fotorama__img']")
@@ -57,6 +58,7 @@ public class ScanProduct extends PageObject{
     }
 
     public boolean isOnProductPage(){
+        //TODO: CHECK IF WE ARE ON THE PRODUCT PAGE
         return false;
     }
 }

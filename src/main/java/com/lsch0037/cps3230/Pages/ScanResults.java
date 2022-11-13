@@ -38,4 +38,11 @@ public class ScanResults extends PageObject{
 
         return links.subList(0, numOfResults);
     }
+
+    public boolean isOnResultsPage(){
+        if(driver.getCurrentUrl().startsWith("https://www.scanmalta.com/shop/catalogsearch/result"))
+            return true;
+
+        return false;
+    }
 }
