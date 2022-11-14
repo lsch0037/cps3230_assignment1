@@ -34,6 +34,11 @@ public class ScanResults extends PageObject{
         return links.subList(0, numOfResults);
     }
 
+    /*
+     * Returns whether the current instance of WebDriver is on the scanmalta search results page
+     * Compares the title of the tab to that which is expected when on the results page
+     * returns true if is is on the results page, false otherwise
+     */
     public boolean isOnResultsPage(){
         if(driver.getCurrentUrl().startsWith("https://www.scanmalta.com/shop/catalogsearch/result"))
             return true;

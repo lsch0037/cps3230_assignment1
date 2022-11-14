@@ -3,10 +3,11 @@ package com.lsch0037.cps3230;
 import com.lsch0037.cps3230.Pages.MarketAlertList;
 import com.lsch0037.cps3230.Pages.MarketAlertHome;
 import com.lsch0037.cps3230.Pages.MarketAlertLogin;
-import com.lsch0037.cps3230.Pages.PageObject;
 import com.lsch0037.cps3230.Pages.ScanHome;
 import com.lsch0037.cps3230.Pages.ScanProduct;
 import com.lsch0037.cps3230.Pages.ScanResults;
+
+import io.cucumber.java.it.Ma;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -24,19 +25,27 @@ import java.util.List;
 
 public class ScreenScraper 
 {
-    public static void main( String[] args ) throws Exception {
-        // System.out.println("Hello World");
+    private WebDriver driver;
+    private ScanHome scanHome;
+    private ScanResults scanResults;
+    private ScanProduct scanProduct;
+    private MarketAlertHome marketAlertHome;
+    private MarketAlertLogin marketAlertLogin;
+    private MarketAlertList marketAlertList;
 
+    public ScreenScraper(WebDriver driver){
         System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
 
-        WebDriver driver = new ChromeDriver();
-        ScanHome scanHome = new ScanHome(driver);
-        ScanResults scanResults = new ScanResults(driver);
-        ScanProduct scanProduct = new ScanProduct(driver);
-        MarketAlertHome marketAlertHome = new MarketAlertHome(driver);
-        MarketAlertLogin marketAlertLogin = new MarketAlertLogin(driver);
-        MarketAlertList marketAlertList = new MarketAlertList(driver);
+        scanHome = new ScanHome(driver);
+        scanResults = new ScanResults(driver);
+        scanProduct = new ScanProduct(driver);
+        marketAlertHome = new MarketAlertHome(driver);
+        marketAlertLogin = new MarketAlertLogin(driver);
+        marketAlertList = new MarketAlertList(driver);
+        
+    }
 
+    public void run(){
         deleteAlerts(driver, Constants.USERID);
 
         visitScan(driver); 
@@ -51,34 +60,35 @@ public class ScreenScraper
         }
 
         driver.quit();
+
     }
 
     //nagivates to the amazon website
-    public static void visitScan(WebDriver driver){
+    public void visitScan(WebDriver driver){
         //visit amazon.com website
         driver.get("https://www.scanmalta.com");
     }
 
     //nagivates to the marketalertum website
-    public static void visitMarketAlert(WebDriver driver){
+    public void visitMarketAlert(WebDriver driver){
         //visit marketalertum.com website
         driver.get("https://www.marketalertum.com/");
     }
 
-    public static void searchScan(WebDriver driver, ScanHome scanHome, String searchTerm){
+    public void searchScan(WebDriver driver, ScanHome scanHome, String searchTerm){
         scanHome.search(searchTerm);
     }
 
-    public static List<String> getResultLinks(WebDriver driver, ScanResults scanResults, int numOfResults){
+    public List<String> getResultLinks(WebDriver driver, ScanResults scanResults, int numOfResults){
         return scanResults.getResultLinks(numOfResults);
     }
 
     //navigates to the page of the given product
-    public static void visitResult(WebDriver driver, String link){
+    public void visitResult(WebDriver driver, String link){
         driver.get(link);
     }
 
-    public static JSONObject parseResult(WebDriver driver, ScanProduct scanProduct, String userId, int alertType){
+    public JSONObject parseResult(WebDriver driver, ScanProduct scanProduct, String userId, int alertType){
         JSONObject object = new JSONObject();
         object.put("alertType", alertType);
         object.put("heading", scanProduct.getHeading());
@@ -91,18 +101,17 @@ public class ScreenScraper
         return object;
     }
 
-    public static void goToLogIn(WebDriver driver, MarketAlertHome marketAlertHome){
+    public void goToLogIn(WebDriver driver, MarketAlertHome marketAlertHome){
         marketAlertHome.clickLogInButton();
     }
 
-    public static void logIn(WebDriver driver, MarketAlertLogin marketAlertLogin, String userId){
+    public void logIn(WebDriver driver, MarketAlertLogin marketAlertLogin, String userId){
         marketAlertLogin.inputUserId(userId);
         marketAlertLogin.submit();
     }
 
     //attempts to post the json object to the api
-    //returns the statusCode of the response or -1 upon failure to send
-    public static HttpResponse postAlert(WebDriver driver, JSONObject json){
+    public HttpResponse postAlert(WebDriver driver, JSONObject json){
 
         HttpClient client = HttpClient.newHttpClient();
         
@@ -120,7 +129,8 @@ public class ScreenScraper
         }
     }
 
-    public static int deleteAlerts(WebDriver driver, String username){
+    //TODO: MAKE THIS RETURN THE RESPONSE OBJECT AND NOT THE STATUS
+    public int deleteAlerts(WebDriver driver, String username){
         HttpClient client = HttpClient.newHttpClient();
         
         HttpRequest request = HttpRequest.newBuilder(
@@ -138,14 +148,12 @@ public class ScreenScraper
         return response.statusCode();
     }
 
-    public static List<WebElement> getAlerts(WebDriver driver){
-        //refresh to ensure the information is up to date
-        driver.navigate().refresh();
+    public List<WebElement> getAlerts(WebDriver driver){
 
-        return driver.findElements(By.tagName("table"));
+        return marketAlertList.getAlerts();
     }
 
-    public static void logOutMarketAlert(WebDriver driver){
-
+    public void logOutMarketAlert(WebDriver driver){
+        //TODO: IMPLEMENT
     }
 }

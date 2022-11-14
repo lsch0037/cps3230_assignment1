@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,6 +31,7 @@ import org.openqa.selenium.By;
 public class ScreenScraperTest 
 {
     WebDriver driver;
+    ScreenScraper screenScraper;
     ScanHome scanHome;
     ScanResults scanResults;
     ScanProduct scanProduct;
@@ -37,14 +39,13 @@ public class ScreenScraperTest
     MarketAlertLogin marketAlertLogin;
     MarketAlertList marketAlertList;
 
-    //TODO: REMOVE THIS BEFORE RELEASE
-
     @BeforeEach
     public void setup(){
 
         System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
 
         driver = new ChromeDriver();
+        screenScraper = new ScreenScraper(driver);
         scanHome = new ScanHome(driver);
         scanResults = new ScanResults(driver);
         scanProduct = new ScanProduct(driver);
@@ -61,24 +62,22 @@ public class ScreenScraperTest
     @Test
     public void testVisitScan(){
         //Visit amazon.com website
-        ScreenScraper.visitScan(driver);
+        screenScraper.visitScan(driver);
 
-        //TODO: REPLACE WITH scanHome.isOnScanHomePage()
         assertTrue(scanHome.isOnScanHomePage());
     }
 
     @Test
     public void testVisitMarketAlert(){
         //Visit marketalertum.com website
-        ScreenScraper.visitMarketAlert(driver);
+        screenScraper.visitMarketAlert(driver);
 
-        //Verify that the title is the same title
-        String title = driver.getTitle();
-        //TODO: REPLACE WITH marketAlertHome.isOnMarketAlertHome()
-        assertEquals(title, "Home Page - MarketAlertUM");
+        //Verify that the driver has navigated to the MarketAlertUm home page
+        assertTrue(marketAlertHome.isOnMarketAlertHome());
     }
 
     //returns search term randomly selected from among products that are offered by scanmalta
+    //TODO: CONSIDER WHETHER RANDOM STRINGS ARE REQUIRED
     public String randomSearchTerm(){
         String searchTerms[] = {
             "Laptop",
@@ -97,23 +96,22 @@ public class ScreenScraperTest
 
     @Test
     public void testSearchScan(){
-        // ScanHome scanHome = new ScanHome(driver);
-        String searchTerm = randomSearchTerm();
-        ScreenScraper.visitScan(driver);  //go to scanmalta
-        ScreenScraper.searchScan(driver, scanHome, searchTerm);   //search for random search term
+        String searchTerm = randomSearchTerm();     //generate random searchterm
+        screenScraper.visitScan(driver);     //go to scanmalta
+        screenScraper.searchScan(driver, scanHome, searchTerm);   //search for term
 
-        //TODO: REPLACE WITH scanResutls.isOnResultsPage()
-        ScanResults scanResults = new ScanResults(driver);
+        //Verify that the driver is on the scan search results page and has found results
+        assertTrue(scanResults.isOnResultsPage());
         assertTrue(scanResults.foundResults());
-        
     }
 
     @Test 
+    //TODO: CONSIDER WHETHER THIS TEST IS NECCESSARY
     public void testSearchScanForInvalidTerm(){
-        ScreenScraper.visitScan(driver);
+        screenScraper.visitScan(driver);
         
         //Search for empty
-        ScreenScraper.searchScan(driver, scanHome, "");
+        screenScraper.searchScan(driver, scanHome, "");
 
         //verify that
         //we are not on the results page
@@ -125,12 +123,9 @@ public class ScreenScraperTest
         String searchTerm = randomSearchTerm();
         int numOfResults = randomInt(1, 10);
 
-        // ScanResults scanResults = new ScanResults(driver);
-        // ScanHome scanHome = new ScanHome(driver);
-
-        ScreenScraper.visitScan(driver);
-        ScreenScraper.searchScan(driver, scanHome, searchTerm);
-        List<String> links = ScreenScraper.getResultLinks(driver, scanResults, numOfResults);
+        screenScraper.visitScan(driver);
+        screenScraper.searchScan(driver, scanHome, searchTerm);
+        List<String> links = screenScraper.getResultLinks(driver, scanResults, numOfResults);
 
 
         //Verify
@@ -141,36 +136,35 @@ public class ScreenScraperTest
     @Test
     //Get result links of a product which has not results on scan
     public void testGetEmptyResults(){
-        ScreenScraper.visitScan(driver);
+        screenScraper.visitScan(driver);
         
         //Search scan for something that they do not offer
-        ScreenScraper.searchScan(driver, scanHome, "pumpkin");
+        screenScraper.searchScan(driver, scanHome, "pumpkin");
 
         //verify that
         assertFalse(scanResults.foundResults());    //no results were found
         assertTrue(scanResults.getResultLinks(10).isEmpty());   //result links are empty
-
     }
 
     @Test
     //Get result links of more results than are displayed
     public void testGetTooManyResults(){
-        ScreenScraper.visitScan(driver);
+        screenScraper.visitScan(driver);
         
-        ScreenScraper.searchScan(driver, scanHome, "playstation");
+        screenScraper.searchScan(driver, scanHome, "playstation");
 
-        List<String> links = ScreenScraper.getResultLinks(driver, scanResults, 100);
+        List<String> links = screenScraper.getResultLinks(driver, scanResults, 100);
 
         assertTrue(links.size() < 100); 
     }
 
     @Test
     public void testVisitProduct(){
-        ScreenScraper.visitScan(driver);
-        ScreenScraper.searchScan(driver, scanHome, randomSearchTerm());
-        String link = ScreenScraper.getResultLinks(driver, scanResults, 1).get(0);
+        screenScraper.visitScan(driver);
+        screenScraper.searchScan(driver, scanHome, randomSearchTerm());
+        String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);
 
-        ScreenScraper.visitResult(driver, link);
+        screenScraper.visitResult(driver, link);
 
         assertTrue(scanProduct.isOnProductPage());
     }
@@ -181,11 +175,11 @@ public class ScreenScraperTest
         String searchTerm = "Laptop";
         int alertType = randomInt(1, 6);
 
-        ScreenScraper.visitScan(driver);
-        ScreenScraper.searchScan(driver, scanHome, searchTerm);
+        screenScraper.visitScan(driver);
+        screenScraper.searchScan(driver, scanHome, searchTerm);
 
-        String link = ScreenScraper.getResultLinks(driver, scanResults, 1).get(0);
-        ScreenScraper.visitResult(driver, link);
+        String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);
+        screenScraper.visitResult(driver, link);
 
         try {
             driver.wait(1000);
@@ -194,7 +188,7 @@ public class ScreenScraperTest
         }
 
         //TODO: FIGURE OUT WHY THIS FAILS SOMETIMES
-        JSONObject product = ScreenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
+        JSONObject product = screenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
 
         assertNotNull(product.get("heading"));
         assertFalse(((String)product.get("heading")).isBlank());
@@ -221,8 +215,8 @@ public class ScreenScraperTest
 
     @Test
     public void testGoToLogIn(){
-        ScreenScraper.visitMarketAlert(driver);
-        ScreenScraper.goToLogIn(driver, marketAlertHome);
+        screenScraper.visitMarketAlert(driver);
+        screenScraper.goToLogIn(driver, marketAlertHome);
 
         // assertEquals(driver.getCurrentUrl(), "https://www.marketalertum.com/Alerts/Login");
         assertTrue(marketAlertLogin.isOnLogInPage());
@@ -230,9 +224,9 @@ public class ScreenScraperTest
 
     //logs into marketAlertUm with the given username
     public void logIn(){
-        ScreenScraper.visitMarketAlert(driver);
-        ScreenScraper.goToLogIn(driver, marketAlertHome);
-        ScreenScraper.logIn(driver, marketAlertLogin, Constants.USERID);
+        screenScraper.visitMarketAlert(driver);
+        screenScraper.goToLogIn(driver, marketAlertHome);
+        screenScraper.logIn(driver, marketAlertLogin, Constants.USERID);
     }
 
     @Test
@@ -245,10 +239,10 @@ public class ScreenScraperTest
 
     @Test
     public void testLogInInvalidId(){
-        ScreenScraper.visitMarketAlert(driver);
-        ScreenScraper.goToLogIn(driver, marketAlertHome);
+        screenScraper.visitMarketAlert(driver);
+        screenScraper.goToLogIn(driver, marketAlertHome);
 
-        ScreenScraper.logIn(driver, marketAlertLogin, "invalidId");
+        screenScraper.logIn(driver, marketAlertLogin, "invalidId");
 
         assertFalse(marketAlertList.isOnAlertsPage());
     }
@@ -306,35 +300,25 @@ public class ScreenScraperTest
         JSONObject product = randomProduct();
 
         //post the alert
-        HttpResponse<String> response = ScreenScraper.postAlert(driver, product);
+        HttpResponse<String> response = screenScraper.postAlert(driver, product);
 
         //verify that
         assertNotNull(response);    //send was successful
         assertEquals(response.statusCode(), 201);   //statusCode is 201
     }
 
-    //returns all the alerts currently on the marketAlertUm website
-    //returns empty list if there are no alerts
-    public List<WebElement> getAlerts(){
-        //log into marketAlertUm
-        logIn();
-
-        //refresh to ensure the information is up to date
-        driver.navigate().refresh();
-
-        return driver.findElements(By.tagName("table"));
-    }
-
+    /*
     @Test
+    //TODO: CHANGE THIS TO THE PAGEOBJECT MODEL
     public void testGetAlerts(){
-        ScreenScraper.deleteAlerts(driver, Constants.USERID);
+        screenScraper.deleteAlerts(driver, Constants.USERID);
 
         JSONObject product = randomProduct();
-        ScreenScraper.postAlert(driver, product);
+        screenScraper.postAlert(driver, product);
         logIn();
 
         
-        WebElement alert = ScreenScraper.getAlerts(driver).get(0);
+        WebElement alert = screenScraper.getAlerts(driver).get(0);
         List<WebElement> trs = alert.findElements(By.tagName("tr"));
         
         //heading
@@ -369,10 +353,27 @@ public class ScreenScraperTest
 
         // assertEquals(, null);
     }
+    */
+
+    @Test 
+    public void testGetAlerts(){
+        screenScraper.deleteAlerts(driver, Constants.USERID);
+        screenScraper.postAlert(driver, randomProduct());
+        logIn();
+
+        List<WebElement> alerts = screenScraper.getAlerts(driver);
+
+        assertFalse(alerts.isEmpty());
+    }
 
     @Test 
     public void testGetEmptyAlerts(){
-        assertTrue(false);
+        screenScraper.deleteAlerts(driver, Constants.USERID);
+        logIn();
+
+        List<WebElement> alerts = screenScraper.getAlerts(driver);
+
+        assertTrue(alerts.isEmpty());
     }
 
     @Test
@@ -382,16 +383,25 @@ public class ScreenScraperTest
         testPostProduct();
 
         //delete all alerts
-        ScreenScraper.deleteAlerts(driver, Constants.USERID);
+        screenScraper.deleteAlerts(driver, Constants.USERID);
 
         //verify that there are no alerts on marketAlertUm
-        List<WebElement> alertElements = getAlerts();   //get alerts
-        assertTrue(alertElements.isEmpty());    //verify there are no alerts
+        logIn();
+        List<WebElement> alerts = screenScraper.getAlerts(driver);
+        assertTrue(alerts.isEmpty());    //verify there are no alerts
     }
 
     @Test
+    //TODO: CONSIDER REMOVING
     public void testDeleteEmptyAlerts(){
-        assertTrue(false);
+
+        //delete all alerts
+        screenScraper.deleteAlerts(driver, Constants.USERID);
+
+        //verify that there are no alerts on marketAlertUm
+        logIn();
+        List<WebElement> alerts = screenScraper.getAlerts(driver);
+        assertTrue(alerts.isEmpty());    //verify there are no alerts
     }
     
     @Test
