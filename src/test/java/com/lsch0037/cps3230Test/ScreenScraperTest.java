@@ -8,6 +8,8 @@ import com.lsch0037.cps3230.Pages.ScanHome;
 import com.lsch0037.cps3230.Pages.ScanProduct;
 import com.lsch0037.cps3230.Pages.ScanResults;
 
+import com.lsch0037.cps3230.Constants;
+
 import java.net.http.HttpResponse;
 import java.util.List;
 
@@ -19,11 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.json.Json;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
 
@@ -38,28 +38,11 @@ public class ScreenScraperTest
     MarketAlertList marketAlertList;
 
     //TODO: REMOVE THIS BEFORE RELEASE
-    String username = "21ed7a53-ff36-4daf-8da0-c8b66b11c0de";
 
     @BeforeEach
     public void setup(){
 
-        //TODO: AUTOMATICALLY FIGURE OUT THE SYSTEM AND SET THE CORRECT PROPERTY
-        /*String osname = System.getProperty("os.name");
-        if(osname.toLowerCase().contains("windows")){
-            //FOR LINUX SYSTEM
-            //System.setProperty("webdriver.chrome.driver", "/home/schimpf/webtesting/chromedriver");
-        }else if(osname.toLowerCase().contains("linux")){
-            //FOR WINDOWS
-            System.setProperty("webdriver.chrome.driver", "C:\\chromedriver\\chromedriver.exe");
-            driver = new ChromeDriver();
-        }
-        */
-
-        //FOR LINUX SYSTEM
-        //System.setProperty("webdriver.chrome.driver", "/home/schimpf/webtesting/chromedriver");
-
-        //FOR WINDOWS
-        System.setProperty("webdriver.chrome.driver", "C:\\chromedriver\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
 
         driver = new ChromeDriver();
         scanHome = new ScanHome(driver);
@@ -194,16 +177,24 @@ public class ScreenScraperTest
 
     @Test
     public void testParseResult(){
-        String searchTerm = randomSearchTerm();
+        // String searchTerm = randomSearchTerm();
+        String searchTerm = "Laptop";
         int alertType = randomInt(1, 6);
 
         ScreenScraper.visitScan(driver);
         ScreenScraper.searchScan(driver, scanHome, searchTerm);
+
         String link = ScreenScraper.getResultLinks(driver, scanResults, 1).get(0);
         ScreenScraper.visitResult(driver, link);
 
+        try {
+            driver.wait(1000);
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+
         //TODO: FIGURE OUT WHY THIS FAILS SOMETIMES
-        JSONObject product = ScreenScraper.parseResult(driver, scanProduct, username, alertType);
+        JSONObject product = ScreenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
 
         assertNotNull(product.get("heading"));
         assertFalse(((String)product.get("heading")).isBlank());
@@ -217,7 +208,7 @@ public class ScreenScraperTest
         assertNotNull(product.get("imageUrl"));
         assertFalse(((String)product.get("imageUrl")).isBlank());
 
-        assertEquals(((String)product.get("postedBy")), username);
+        assertEquals(((String)product.get("postedBy")), Constants.USERID);
 
         assertTrue((int)product.get("priceInCents") > 0);
     }
@@ -241,7 +232,7 @@ public class ScreenScraperTest
     public void logIn(){
         ScreenScraper.visitMarketAlert(driver);
         ScreenScraper.goToLogIn(driver, marketAlertHome);
-        ScreenScraper.logIn(driver, marketAlertLogin, username);
+        ScreenScraper.logIn(driver, marketAlertLogin, Constants.USERID);
     }
 
     @Test
@@ -304,7 +295,7 @@ public class ScreenScraperTest
         product.put("description", possibleDescriptions[randomInt(0, 3)]);
         product.put("url", possibleUrls[randomInt(0, 3)]);
         product.put("imageUrl", possibleImageUrls[randomInt(0, 3)]);
-        product.put("postedBy", username);
+        product.put("postedBy", Constants.USERID);
         product.put("priceInCents", randomInt(0, 1000000));
         
         return product;
@@ -336,7 +327,7 @@ public class ScreenScraperTest
 
     @Test
     public void testGetAlerts(){
-        ScreenScraper.deleteAlerts(driver, username);
+        ScreenScraper.deleteAlerts(driver, Constants.USERID);
 
         JSONObject product = randomProduct();
         ScreenScraper.postAlert(driver, product);
@@ -391,7 +382,7 @@ public class ScreenScraperTest
         testPostProduct();
 
         //delete all alerts
-        ScreenScraper.deleteAlerts(driver, username);
+        ScreenScraper.deleteAlerts(driver, Constants.USERID);
 
         //verify that there are no alerts on marketAlertUm
         List<WebElement> alertElements = getAlerts();   //get alerts

@@ -1,0 +1,1 @@
+Before attemptiong to run the code go to the Constants.java file in the src/java/com/lsch0037/cps3230 directory and follow the instructions given.

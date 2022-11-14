@@ -25,10 +25,9 @@ import java.util.List;
 public class ScreenScraper 
 {
     public static void main( String[] args ) throws Exception {
-        System.out.println("Hello World");
+        // System.out.println("Hello World");
 
-        System.setProperty("webdriver.chrome.driver", "C:\\chromedriver\\chromedriver.exe");
-        String userId = "21ed7a53-ff36-4daf-8da0-c8b66b11c0de";
+        System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
 
         WebDriver driver = new ChromeDriver();
         ScanHome scanHome = new ScanHome(driver);
@@ -38,7 +37,7 @@ public class ScreenScraper
         MarketAlertLogin marketAlertLogin = new MarketAlertLogin(driver);
         MarketAlertList marketAlertList = new MarketAlertList(driver);
 
-        deleteAlerts(driver, userId);
+        deleteAlerts(driver, Constants.USERID);
 
         visitScan(driver); 
         searchScan(driver, scanHome, "macbook");
@@ -47,9 +46,11 @@ public class ScreenScraper
         JSONObject product;
         for (String link : links) {
             visitResult(driver, link);
-            product = parseResult(driver, scanProduct, userId, 1);
+            product = parseResult(driver, scanProduct, Constants.USERID, 1);
             postAlert(driver, product);
         }
+
+        driver.quit();
     }
 
     //nagivates to the amazon website
@@ -119,7 +120,6 @@ public class ScreenScraper
         }
     }
 
-    //TODO: CHANGE THIS TO RETURN THE RESPONSE OBJECT AS OPPOSED TO THE STATUSCODE
     public static int deleteAlerts(WebDriver driver, String username){
         HttpClient client = HttpClient.newHttpClient();
         

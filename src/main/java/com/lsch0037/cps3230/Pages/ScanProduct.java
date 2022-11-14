@@ -7,16 +7,17 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
+import com.lsch0037.cps3230.ScreenScraperUtils;
+
 public class ScanProduct extends PageObject{
 
     @FindBy(className = "page-title-wrapper")
     private WebElement titleElement;
 
-    // @FindBy(className = "overview")
     @FindBy(xpath = "//div[@itemProp='description']")
     private WebElement descriptionElement;
 
-    @FindBy(xpath = "//img[@class='fotorama__img']")
+    @FindBy(className  = "fotorama__stage__frame")
     private WebElement imageElement;
 
     @FindBy(className = "price-box")
@@ -45,7 +46,8 @@ public class ScanProduct extends PageObject{
     }
 
     public String getImageUrl(){
-        return imageElement.getAttribute("src");
+        WebElement awaitImageElement = ScreenScraperUtils.awaitElementVisible(driver, imageElement, 10);
+        return awaitImageElement.getAttribute("href");
     }
 
     public int getPriceInCents(){
