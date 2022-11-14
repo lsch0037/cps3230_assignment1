@@ -110,26 +110,26 @@ public class ScreenScraperTest
     }
 
     @Test 
-    //TODO: CONSIDER WHETHER THIS TEST IS NECCESSARY
+    //Get result links of a product which has no results on scan
     public void testSearchScanForInvalidTerm(){
         screenScraper.visitScan(driver);
         
-        //Search for empty
-        screenScraper.searchScan(driver, scanHome, "");
+        //Search scan for something that they do not offer
+        screenScraper.searchScan(driver, scanHome, "pumpkin");
 
         //verify that
-        //we are not on the results page
-        assertFalse(scanResults.isOnResultsPage());
+        assertFalse(scanResults.foundResults());    //no results were found
+        assertTrue(scanResults.getResultLinks(10).isEmpty());
     }
 
     @Test
     public void testGetResultLinks(){
-        String searchTerm = randomSearchTerm();
-        int numOfResults = randomInt(1, 10);
+        String searchTerm = randomSearchTerm();     //generate random search term
+        int numOfResults = randomInt(1, 10);    //generate random number of results
 
         screenScraper.visitScan(driver);
-        screenScraper.searchScan(driver, scanHome, searchTerm);
-        List<String> links = screenScraper.getResultLinks(driver, scanResults, numOfResults);
+        screenScraper.searchScan(driver, scanHome, searchTerm);     //search for searchterm
+        List<String> links = screenScraper.getResultLinks(driver, scanResults, numOfResults);   //get results
 
 
         //Verify
@@ -138,8 +138,8 @@ public class ScreenScraperTest
     }
 
     @Test
-    //Get result links of a product which has not results on scan
-    public void testGetEmptyResults(){
+    //Get result links of a product which has no results on scan
+    public void testGetEmptyResultsLinks(){
         screenScraper.visitScan(driver);
         
         //Search scan for something that they do not offer
@@ -152,55 +152,66 @@ public class ScreenScraperTest
 
     @Test
     //Get result links of more results than are displayed
-    public void testGetTooManyResults(){
+    public void testGetTooManyResultLinks(){
         screenScraper.visitScan(driver);
-        
-        screenScraper.searchScan(driver, scanHome, "playstation");
+        screenScraper.searchScan(driver, scanHome, "playstation");  //search scan
 
+        //attempt to get more results than fit on a page
         List<String> links = screenScraper.getResultLinks(driver, scanResults, 100);
 
+        //verify that the actual number of results was returned and not the expected
         assertTrue(links.size() < 100); 
+        assertFalse(links.isEmpty());   //links are also not empty
     }
 
     @Test
     public void testVisitProduct(){
         screenScraper.visitScan(driver);
-        screenScraper.searchScan(driver, scanHome, randomSearchTerm());
-        String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);
+        screenScraper.searchScan(driver, scanHome, randomSearchTerm());     //search scan
+        String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);  //get first result
 
-        screenScraper.visitResult(driver, link);
+        screenScraper.visitResult(driver, link);    //go to the first result
 
+        //verify that the driver navigated to the product page
         assertTrue(scanProduct.isOnProductPage());
     }
 
     @Test
     public void testParseResult(){
-        String searchTerm = randomSearchTerm();
-        // String searchTerm = "Laptop";
-        int alertType = randomInt(1, 6);
+        String searchTerm = randomSearchTerm();     //generate random search term
+        int alertType = randomInt(1, 6);    //generate random alert type
 
+        
         screenScraper.visitScan(driver);
         screenScraper.searchScan(driver, scanHome, searchTerm);
-
         String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);
-        screenScraper.visitResult(driver, link);
+        screenScraper.visitResult(driver, link);    //go to a result product page
 
+        //parse into JSONObject
         JSONObject product = screenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
 
+        //JSONObject exists and has non-blank heading
         assertNotNull(product.get("heading"));
         assertFalse(((String)product.get("heading")).isBlank());
         
+        //JSONObject exists and has non-blank description
         assertNotNull(product.get("description"));
         assertFalse(((String)product.get("description")).isBlank());
 
+        //JSONObject exists and has non-blank url
         assertNotNull(product.get("url"));
         assertFalse(((String)product.get("url")).isBlank());
 
+        //JSONObject exists and has non-blank imageUrl
         assertNotNull(product.get("imageUrl"));
         assertFalse(((String)product.get("imageUrl")).isBlank());
 
+        //JSONObject exists and has non-blank postedby
+        assertNotNull(product.get("postedBy"));
         assertEquals(((String)product.get("postedBy")), Constants.USERID);
 
+        //JSONObject exists and has non-blank price
+        assertNotNull(product.get("priceInCents"));
         assertTrue((int)product.get("priceInCents") > 0);
     }
 
@@ -220,6 +231,7 @@ public class ScreenScraperTest
     }
 
     @Test
+    //TODO: MAKE THIS TEST THE SCREENSCRAPER LOGIN INSTEAD
     public void testLogIn(){
         //log in to marketAlertUm
         logIn();
@@ -235,6 +247,7 @@ public class ScreenScraperTest
         screenScraper.logIn(driver, marketAlertLogin, "invalidId");
 
         assertFalse(marketAlertList.isOnAlertsPage());
+        assertTrue(marketAlertLogin.isOnLogInPage());
     }
 
     //returns a random number between max and min
@@ -243,7 +256,6 @@ public class ScreenScraperTest
     }
 
     //generates a new AlertItem with each attribute randomly selected
-    //TODO: MAKE THE DATA IN THE OBJECT TRULY RANDOM
     public JSONObject randomProduct(){
         String possibleHeadings[] = {
             "Apple MacBook Air 13\" Retina M1 Chip 256GB SSD 8GB RAM Gold (Ex Display)",
@@ -325,29 +337,20 @@ public class ScreenScraperTest
         testPostProduct();
 
         //delete all alerts
-        screenScraper.deleteAlerts(driver, Constants.USERID);
-
-        //verify that there are no alerts on marketAlertUm
-        logIn();
-        List<WebElement> alerts = screenScraper.getAlerts(driver);
-        assertTrue(alerts.isEmpty());    //verify there are no alerts
+        int statusCode = screenScraper.deleteAlerts(driver, Constants.USERID);
+        
+        //verify statusCode indicates successful delete
+        assertEquals(statusCode, 201);
     }
 
     @Test
-    //TODO: CONSIDER REMOVING
     public void testDeleteEmptyAlerts(){
+        //ensure that alerts are empty
+        screenScraper.deleteAlerts(driver, Constants.USERID);
 
         //delete all alerts
-        screenScraper.deleteAlerts(driver, Constants.USERID);
+        int statusCode = screenScraper.deleteAlerts(driver, Constants.USERID);
 
-        //verify that there are no alerts on marketAlertUm
-        logIn();
-        List<WebElement> alerts = screenScraper.getAlerts(driver);
-        assertTrue(alerts.isEmpty());    //verify there are no alerts
-    }
-    
-    @Test
-    public void testLogOutMarketAlert(){
-        assertTrue(false);
+        assertEquals(statusCode, 201);
     }
 }

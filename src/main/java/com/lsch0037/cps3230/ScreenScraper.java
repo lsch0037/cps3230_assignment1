@@ -32,7 +32,7 @@ public class ScreenScraper
 
     public ScreenScraper(WebDriver driver){
         
-        System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
+        this.driver = driver;
 
         scanHome = new ScanHome(driver);
         scanResults = new ScanResults(driver);
@@ -42,22 +42,22 @@ public class ScreenScraper
         marketAlertList = new MarketAlertList(driver);
     }
 
-    public void run(){
-        deleteAlerts(driver, Constants.USERID);
+    //run the screen scraper program
+    public void run(String userId, String searchTerm, int numOfResults, int alertType){
+        deleteAlerts(driver, userId);
 
         visitScan(driver); 
-        searchScan(driver, scanHome, "macbook");
-        List<String> links = getResultLinks(driver, scanResults, 5);
+        searchScan(driver, scanHome, searchTerm);
+        List<String> links = getResultLinks(driver, scanResults, numOfResults);
 
         JSONObject product;
         for (String link : links) {
             visitResult(driver, link);
-            product = parseResult(driver, scanProduct, Constants.USERID, 1);
+            product = parseResult(driver, scanProduct, userId, alertType);
             postAlert(driver, product);
         }
 
         driver.quit();
-
     }
 
     //nagivates to the amazon website
@@ -72,10 +72,12 @@ public class ScreenScraper
         driver.get("https://www.marketalertum.com/");
     }
 
+    //search scanmalta.com for the specified searchterm
     public void searchScan(WebDriver driver, ScanHome scanHome, String searchTerm){
         scanHome.search(searchTerm);
     }
 
+    //get the links for the top results on scanmalta
     public List<String> getResultLinks(WebDriver driver, ScanResults scanResults, int numOfResults){
         return scanResults.getResultLinks(numOfResults);
     }
@@ -85,6 +87,7 @@ public class ScreenScraper
         driver.get(link);
     }
 
+    //find the neccessary details on the productpage and create a JSONObject with the neccessary items as products
     public JSONObject parseResult(WebDriver driver, ScanProduct scanProduct, String userId, int alertType){
         JSONObject object = new JSONObject();
         object.put("alertType", alertType);
@@ -98,20 +101,27 @@ public class ScreenScraper
         return object;
     }
 
+    //go the the marketAlertUm login page
     public void goToLogIn(WebDriver driver, MarketAlertHome marketAlertHome){
         marketAlertHome.clickLogInButton();
     }
 
+    //log in to marketAlertUm by inputting the user Id
     public void logIn(WebDriver driver, MarketAlertLogin marketAlertLogin, String userId){
         marketAlertLogin.inputUserId(userId);
         marketAlertLogin.submit();
     }
 
-    //attempts to post the json object to the api
+    /*
+     * Attepts to post the json object to the api
+     * Returns the response object
+     * In case send fails return null
+     */
     public HttpResponse postAlert(WebDriver driver, JSONObject json){
 
         HttpClient client = HttpClient.newHttpClient();
         
+        //create post request out of json object
         HttpRequest request = HttpRequest.newBuilder(
             URI.create("https://api.marketalertum.com/Alert"))
         .header("Content-Type", "application/json")
@@ -119,38 +129,41 @@ public class ScreenScraper
         .build();
         
         try{
+            //attempt to send 
             HttpResponse<String> res = client.send(request, HttpResponse.BodyHandlers.ofString());
-            return res;
+            return res;     //return response 
         }catch(Exception e){
-            return null;
+            return null;    //in case of fail return a null object
         }
     }
 
-    //TODO: MAKE THIS RETURN THE RESPONSE OBJECT AND NOT THE STATUS
-    public int deleteAlerts(WebDriver driver, String username){
+    /*
+     * Sends a delete request with the given user Id to the marketAlertUm api
+     */
+    public int deleteAlerts(WebDriver driver, String userId){
         HttpClient client = HttpClient.newHttpClient();
         
+        //create delete request
         HttpRequest request = HttpRequest.newBuilder(
-            URI.create("https://api.marketalertum.com/Alert?userId=" + username))
+            URI.create("https://api.marketalertum.com/Alert?userId=" + userId))
         .DELETE()
         .build();
         
         HttpResponse<String> response;
         try{
+            //attempt to make send request
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // return client.send(request, HttpResponse.BodyHandlers.ofString());
         }catch(Exception e){
-            return -1;
+            return -1;  //in case of exception return -1
         }
 
+        //return the statuscode of the request
         return response.statusCode();
     }
 
+    //return a list of alerts that are displayed on marketAlertUm
     public List<WebElement> getAlerts(WebDriver driver){
-
         return marketAlertList.getAlerts();
-    }
-
-    public void logOutMarketAlert(WebDriver driver){
-        //TODO: IMPLEMENT
     }
 }

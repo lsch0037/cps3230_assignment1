@@ -1,8 +1,6 @@
 package com.lsch0037.cps3230Test;
 
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -10,6 +8,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 
+import com.lsch0037.cps3230.Constants;
 import com.lsch0037.cps3230.ScreenScraper;
 import com.lsch0037.cps3230.Pages.MarketAlertHome;
 import com.lsch0037.cps3230.Pages.MarketAlertList;
@@ -30,7 +29,7 @@ public class ScreenScraperSteps{
 
     @Given("I am a user of marketalertum")
     public void iAmAUserOfMarketalertum(){
-        screenScraper.run();
+        screenScraper.run(Constants.USERID, "Laptop", 5, 1);
     }
 
     @When("I login using valid credentials")
@@ -47,5 +46,4 @@ public class ScreenScraperSteps{
         List<WebElement> alerts = screenScraper.getAlerts(driver);
         Assertions.assertFalse(alerts.isEmpty());
     }
-
 }
