@@ -7,13 +7,10 @@ import com.lsch0037.cps3230.Pages.ScanHome;
 import com.lsch0037.cps3230.Pages.ScanProduct;
 import com.lsch0037.cps3230.Pages.ScanResults;
 
-import io.cucumber.java.it.Ma;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.json.JSONObject;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.By;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -34,6 +31,7 @@ public class ScreenScraper
     private MarketAlertList marketAlertList;
 
     public ScreenScraper(WebDriver driver){
+        
         System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
 
         scanHome = new ScanHome(driver);
@@ -42,7 +40,6 @@ public class ScreenScraper
         marketAlertHome = new MarketAlertHome(driver);
         marketAlertLogin = new MarketAlertLogin(driver);
         marketAlertList = new MarketAlertList(driver);
-        
     }
 
     public void run(){

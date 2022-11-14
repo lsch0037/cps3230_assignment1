@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.By;
 
 public class ScreenScraperTest 
 {
@@ -40,12 +39,15 @@ public class ScreenScraperTest
     MarketAlertList marketAlertList;
 
     @BeforeEach
+    //runs before each test 
     public void setup(){
 
+        //set path to chromedriver executable
         System.setProperty("webdriver.chrome.driver", Constants.CHROMEDRIVERPATH);
 
-        driver = new ChromeDriver();
-        screenScraper = new ScreenScraper(driver);
+        driver = new ChromeDriver();                        //initialise ChromeDriver
+        screenScraper = new ScreenScraper(driver);          //intiialise ScreenScraper
+        //initialise all the page objects
         scanHome = new ScanHome(driver);
         scanResults = new ScanResults(driver);
         scanProduct = new ScanProduct(driver);
@@ -55,7 +57,9 @@ public class ScreenScraperTest
     }
 
     @AfterEach
+    //Teardown method which runs after each test
     public void teardown(){
+        //quit WebDriver
         driver.quit();
     }
 
@@ -181,12 +185,6 @@ public class ScreenScraperTest
         String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);
         screenScraper.visitResult(driver, link);
 
-        try {
-            driver.wait(1000);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-
         //TODO: FIGURE OUT WHY THIS FAILS SOMETIMES
         JSONObject product = screenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
 
@@ -218,7 +216,6 @@ public class ScreenScraperTest
         screenScraper.visitMarketAlert(driver);
         screenScraper.goToLogIn(driver, marketAlertHome);
 
-        // assertEquals(driver.getCurrentUrl(), "https://www.marketalertum.com/Alerts/Login");
         assertTrue(marketAlertLogin.isOnLogInPage());
     }
 
@@ -306,54 +303,6 @@ public class ScreenScraperTest
         assertNotNull(response);    //send was successful
         assertEquals(response.statusCode(), 201);   //statusCode is 201
     }
-
-    /*
-    @Test
-    //TODO: CHANGE THIS TO THE PAGEOBJECT MODEL
-    public void testGetAlerts(){
-        screenScraper.deleteAlerts(driver, Constants.USERID);
-
-        JSONObject product = randomProduct();
-        screenScraper.postAlert(driver, product);
-        logIn();
-
-        
-        WebElement alert = screenScraper.getAlerts(driver).get(0);
-        List<WebElement> trs = alert.findElements(By.tagName("tr"));
-        
-        //heading
-        String heading = trs.get(0).getText();
-
-        //imageUrl
-        String imageUrl = trs.get(1)
-            .findElement(By.tagName("img"))
-            .getAttribute("src");
-
-        //description
-        String description = trs.get(2).getText();
-
-        //price
-        String priceInText = trs.get(3).getText();
-        String price = priceInText.split("€")[1];
-        String priceCleaned = price.replace(".", "")
-        .replace("\"", "");
-
-        //url
-        String url = trs.get(4)
-        .findElement(By.tagName("a"))
-        .getAttribute("href");
-
-        
-        //TODO: SOMEHOW TEST ALERTTYPE
-        // assertTrue(heading.startsWith(product.getHeading(), 0));
-        // assertEquals(product.getDescription(), description);
-        // assertEquals(product.getUrl(), url);
-        // assertEquals(product.getImageUrl(), imageUrl);
-        // assertEquals(Integer.toString(product.getPriceInCents()), priceCleaned);
-
-        // assertEquals(, null);
-    }
-    */
 
     @Test 
     public void testGetAlerts(){

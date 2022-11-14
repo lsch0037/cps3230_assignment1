@@ -1,9 +1,14 @@
+package com.lsch0037.cps3230Test;
+
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 
 import com.lsch0037.cps3230.ScreenScraper;
 import com.lsch0037.cps3230.Pages.MarketAlertHome;
@@ -16,7 +21,7 @@ import io.cucumber.java.en.When;
 
 public class ScreenScraperSteps{
 
-    private WebDriver driver;
+    private WebDriver driver = new ChromeDriver();
     private ScreenScraper screenScraper = new ScreenScraper(driver);
     private MarketAlertHome marketAlertHome = new MarketAlertHome(driver);
     private MarketAlertLogin marketAlertLogin = new MarketAlertLogin(driver);
@@ -36,11 +41,11 @@ public class ScreenScraperSteps{
         screenScraper.logIn(driver, marketAlertLogin, userId);
     }
 
-    @Then("I should see my alertsFor registered users to gain access to MarketAlertUm")
+    @Then("I should see my alerts")
     public void I_should_see_my_alertsFor_registered_users_to_gain_access_to_MarketAlertUm() {
-        // Write code here that turns the phrase above into concrete actions
+
         List<WebElement> alerts = screenScraper.getAlerts(driver);
-        assertFalse(alerts.isEmpty());
+        Assertions.assertFalse(alerts.isEmpty());
     }
 
 }

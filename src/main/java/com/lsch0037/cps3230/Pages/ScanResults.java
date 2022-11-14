@@ -7,6 +7,7 @@ import org.openqa.selenium.WebElement;
 import java.util.LinkedList;
 import java.util.List;
 
+//Page object class for the scan search results page
 public class ScanResults extends PageObject{
 
     public ScanResults(WebDriver driver){
