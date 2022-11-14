@@ -175,8 +175,8 @@ public class ScreenScraperTest
 
     @Test
     public void testParseResult(){
-        // String searchTerm = randomSearchTerm();
-        String searchTerm = "Laptop";
+        String searchTerm = randomSearchTerm();
+        // String searchTerm = "Laptop";
         int alertType = randomInt(1, 6);
 
         screenScraper.visitScan(driver);
@@ -185,7 +185,6 @@ public class ScreenScraperTest
         String link = screenScraper.getResultLinks(driver, scanResults, 1).get(0);
         screenScraper.visitResult(driver, link);
 
-        //TODO: FIGURE OUT WHY THIS FAILS SOMETIMES
         JSONObject product = screenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
 
         assertNotNull(product.get("heading"));
@@ -203,12 +202,6 @@ public class ScreenScraperTest
         assertEquals(((String)product.get("postedBy")), Constants.USERID);
 
         assertTrue((int)product.get("priceInCents") > 0);
-    }
-
-    @Test
-    //TODO: CONSIDER WHETHER THIS IS NECCESSARY
-    public void testParseResultInvalidPage(){
-        assertTrue(false);
     }
 
     @Test

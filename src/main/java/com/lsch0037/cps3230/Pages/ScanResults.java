@@ -14,25 +14,44 @@ public class ScanResults extends PageObject{
         super(driver);
     }
 
+    /*
+     * Checks whether the message that is displayed when no results are found exists
+     * If the message does exist then return false
+     * Otherwise return true
+     */
     public boolean foundResults(){
+        //search for no results message
         List<WebElement> noResultsMessage = driver.findElements(By.className("message"));
 
+        //if no such element is found
         if(noResultsMessage.isEmpty())
             return true;
 
         return false;
     }
 
+    /*
+     * Returns a list of links to the top results, the length of the list is specified in numOfResults
+     * If numOfResults is greater than the actual results found then only as many links are returns as results exist
+     */
     public List<String> getResultLinks(int numOfResults){
+        //search for results elements
         List<WebElement> resultItems = driver.findElements(By.className("product-item-top"));
 
         List<String> links = new LinkedList<String>();
+
+        //for each result found
         for (WebElement result : resultItems) {
-            WebElement a = result.findElement(By.tagName("a"));
-            links.add(a.getAttribute("href"));
+            WebElement a = result.findElement(By.tagName("a"));     //get the sub-element that holds the link
+            links.add(a.getAttribute("href"));                          //add links to list
         }
 
-        return links.subList(0, numOfResults);
+
+        //if more results are expected than exist
+        if(numOfResults > links.size())
+            return links;                   //return all results that exist
+        else
+            return links.subList(0, numOfResults);      //return as many results as are expected
     }
 
     /*
