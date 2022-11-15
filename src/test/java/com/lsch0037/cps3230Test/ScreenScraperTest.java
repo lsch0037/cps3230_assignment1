@@ -81,7 +81,6 @@ public class ScreenScraperTest
     }
 
     //returns search term randomly selected from among products that are offered by scanmalta
-    //TODO: CONSIDER WHETHER RANDOM STRINGS ARE REQUIRED
     public String randomSearchTerm(){
         String searchTerms[] = {
             "Laptop",
@@ -123,6 +122,7 @@ public class ScreenScraperTest
     }
 
     @Test
+    //Get results links of a product that has results on scan
     public void testGetResultLinks(){
         String searchTerm = randomSearchTerm();     //generate random search term
         int numOfResults = randomInt(1, 10);    //generate random number of results
@@ -190,6 +190,8 @@ public class ScreenScraperTest
         //parse into JSONObject
         JSONObject product = screenScraper.parseResult(driver, scanProduct, Constants.USERID, alertType);
 
+        //verify that:
+
         //JSONObject exists and has non-blank heading
         assertNotNull(product.get("heading"));
         assertFalse(((String)product.get("heading")).isBlank());
@@ -216,14 +218,22 @@ public class ScreenScraperTest
     }
 
     @Test
+    //Navigate to the login page from the marketAlertUm home page
     public void testGoToLogIn(){
+        //Go to marketAlertUm home
         screenScraper.visitMarketAlert(driver);
+
+        //Go to login page
         screenScraper.goToLogIn(driver, marketAlertHome);
 
+        //verify that it is on login page
         assertTrue(marketAlertLogin.isOnLogInPage());
     }
 
-    //logs into marketAlertUm with the given username
+    /*
+     * This function exists to avoid the repetition of all the steps needed to log in to marketAlertUm
+     * It visits the home page, navigates to the login page, and attempts to log in using the user id
+     */
     public void logIn(){
         screenScraper.visitMarketAlert(driver);
         screenScraper.goToLogIn(driver, marketAlertHome);
@@ -231,31 +241,46 @@ public class ScreenScraperTest
     }
 
     @Test
-    //TODO: MAKE THIS TEST THE SCREENSCRAPER LOGIN INSTEAD
+    //Log in to marketAlertUm given a correct userId
     public void testLogIn(){
         //log in to marketAlertUm
         logIn();
 
+        //verify that the driver has successfully logged in and is on the alerts page
         assertTrue(marketAlertList.isOnAlertsPage());
     }
 
     @Test
+    //Attempt to login to marketAlertUm given an incorrect userId
     public void testLogInInvalidId(){
+        //navigate to login page
         screenScraper.visitMarketAlert(driver);
         screenScraper.goToLogIn(driver, marketAlertHome);
 
+        //attempt to log in using an invalid user Id
         screenScraper.logIn(driver, marketAlertLogin, "invalidId");
 
+        //verify that driver is not on the alerts page but remains on the login page
         assertFalse(marketAlertList.isOnAlertsPage());
         assertTrue(marketAlertLogin.isOnLogInPage());
     }
 
-    //returns a random number between max and min
+    /*
+     * This method exists to simplify the generation of random integers
+     * returns a random integer between and including min and max
+     */
     public int randomInt(int min, int max){
         return (int) (Math.random()* (max - min) + min);
     }
 
-    //generates a new AlertItem with each attribute randomly selected
+    /*
+     * This method exists to generate a JSONObject with the necessary attributes to post as an alert to the api
+     * The attributes that are strings are randomly selected from a list of real examples of that attribute
+     * The posted by attribute is set to the UserId specified in Constants.java
+     * The price in cents is a random integer between 0 and 1000000
+     * The alert type is a random integer between 1 and 6 (including both)
+     * Returns the JSONObject with all the attributes set
+     */
     public JSONObject randomProduct(){
         String possibleHeadings[] = {
             "Apple MacBook Air 13\" Retina M1 Chip 256GB SSD 8GB RAM Gold (Ex Display)",
@@ -286,19 +311,22 @@ public class ScreenScraperTest
         };
 
         JSONObject product = new JSONObject();
+        //select the attriubtes randomly
         product.put("alertType", randomInt(0, 6));
         product.put("heading", possibleHeadings[randomInt(0, 3)]);
         product.put("description", possibleDescriptions[randomInt(0, 3)]);
         product.put("url", possibleUrls[randomInt(0, 3)]);
         product.put("imageUrl", possibleImageUrls[randomInt(0, 3)]);
-        product.put("postedBy", Constants.USERID);
-        product.put("priceInCents", randomInt(0, 1000000));
+        product.put("postedBy", Constants.USERID);                       //set to real user id
+        product.put("priceInCents", randomInt(0, 1000000));     //price is a random number between €0 to €10,000
         
-        return product;
+        return product;     //return product with random attriubtes
     }
 
     @Test
+    //post an alert to the marketAlertUm api
     public void testPostProduct(){
+        //generate random product
         JSONObject product = randomProduct();
 
         //post the alert
@@ -310,27 +338,36 @@ public class ScreenScraperTest
     }
 
     @Test 
+    //retrieve a product from the marketAlertUm web page
     public void testGetAlerts(){
+        //first delete all alerts and then post one random product
         screenScraper.deleteAlerts(driver, Constants.USERID);
         screenScraper.postAlert(driver, randomProduct());
-        logIn();
+        logIn();    //log in to marketAlertUm
 
+        //get the list of alerts displayed
         List<WebElement> alerts = screenScraper.getAlerts(driver);
 
+        //verify that an item was retrieved
         assertFalse(alerts.isEmpty());
     }
 
     @Test 
+    //attempt to retrive a product from the marketAlertUm web page when there are no items
     public void testGetEmptyAlerts(){
+        //delete all alerts to ensure page is empty
         screenScraper.deleteAlerts(driver, Constants.USERID);
-        logIn();
+        logIn();    //log in to marketAlertUm
 
+        //get the list of alerts displayed
         List<WebElement> alerts = screenScraper.getAlerts(driver);
 
+        //verify that no items were retrieved
         assertTrue(alerts.isEmpty());
     }
 
     @Test
+    //delete an alert from marketAlertUm
     public void testDeleteAlerts(){
         
         //post alert to marketAlertUm
@@ -344,6 +381,7 @@ public class ScreenScraperTest
     }
 
     @Test
+    //delete and alert from marketAlertUm when the page is already empty
     public void testDeleteEmptyAlerts(){
         //ensure that alerts are empty
         screenScraper.deleteAlerts(driver, Constants.USERID);
@@ -351,6 +389,7 @@ public class ScreenScraperTest
         //delete all alerts
         int statusCode = screenScraper.deleteAlerts(driver, Constants.USERID);
 
+        //verify statusCode indicates successful delete
         assertEquals(statusCode, 201);
     }
 }
